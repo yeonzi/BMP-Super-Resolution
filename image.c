@@ -36,6 +36,7 @@ image_t * img_new(size_t width, size_t height, uint8_t model)
         img->data   = NULL;
 
         switch (model) {
+            /*
             case IMG_MODEL_CIEXYZ : img->pixel_size = 3 * sizeof(int16_t); break;
             case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(uint8_t); break;
             case IMG_MODEL_BGRA   : img->pixel_size = 4 * sizeof(uint8_t); break;
@@ -44,6 +45,8 @@ image_t * img_new(size_t width, size_t height, uint8_t model)
             case IMG_MODEL_HSV    : img->pixel_size = 3 * sizeof(int16_t); break;
             case IMG_MODEL_HSL    : img->pixel_size = 3 * sizeof(int16_t); break;
             case IMG_MODEL_CYMK   : img->pixel_size = 3 * sizeof(uint8_t); break;
+            */
+            case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(uint8_t); break;
         }
 
         img->data = malloc(img->width * img->height * img->pixel_size);
@@ -64,20 +67,6 @@ void img_free(image_t * img)
         if (img->data != NULL) free(img->data);
     } while (0);
 }
-
-#define CYR     77    // 0.299
-#define CYG     150    // 0.587
-#define CYB      29    // 0.114
-
-#define CUR     -43    // -0.16874
-#define CUG    -85    // -0.33126
-#define CUB     128    // 0.5
-
-#define CVR      128   // 0.5
-#define CVG     -107   // -0.41869
-#define CVB      -21   // -0.08131
-
-#define CSHIFT  8
 
 int bgr_to_ycbcr(image_t * img)
 {
@@ -167,70 +156,29 @@ int ycbcr_to_bgr(image_t * img)
     return 0;
 }
 
-int img_convert_to_ciexyz(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
-int img_convert_to_bgr(image_t * img)
-{
-    switch (img->model) {
-        case IMG_MODEL_YCBCR: return ycbcr_to_bgr(img); break;
-        default:
-            fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-            return -1;
-    }
-
-}
-
-int img_convert_to_bgra(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
-int img_convert_to_yuv(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
-int img_convert_to_ycbcr(image_t * img)
-{
-    switch (img->model) {
-        case IMG_MODEL_BGR: return bgr_to_ycbcr(img); break;
-        default:
-            fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-            return -1;
-    }
-}
-
-
-int img_convert_to_hsv(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
-
-int img_convert_to_hsl(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
-int img_convert_to_cymk(image_t * img)
-{
-    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
-}
-
 int img_convert(image_t * img, uint8_t model)
 {
     if (model == img->model) return 0;
     switch (model) {
-        case IMG_MODEL_CIEXYZ : return img_convert_to_ciexyz(img); break;
-        case IMG_MODEL_BGR    : return img_convert_to_bgr(img)   ; break;
-        case IMG_MODEL_BGRA   : return img_convert_to_bgra(img)  ; break;
-        case IMG_MODEL_YUV    : return img_convert_to_yuv(img)   ; break;
-        case IMG_MODEL_YCBCR  : return img_convert_to_ycbcr(img) ; break;
-        case IMG_MODEL_HSV    : return img_convert_to_hsv(img)   ; break;
-        case IMG_MODEL_HSL    : return img_convert_to_hsl(img)   ; break;
-        case IMG_MODEL_CYMK   : return img_convert_to_cymk(img)  ; break;
+        case IMG_MODEL_CIEXYZ : break;
+        case IMG_MODEL_BGR:
+            switch (img->model) {
+                case IMG_MODEL_YCBCR: return ycbcr_to_bgr(img); break;
+                default: break;
+            }
+            break;
+        case IMG_MODEL_BGRA   : break;
+        case IMG_MODEL_YUV    : break;
+        case IMG_MODEL_YCBCR:
+            switch (img->model) {
+                case IMG_MODEL_BGR: return bgr_to_ycbcr(img); break;
+                default: break;
+            }
+            break;
+        case IMG_MODEL_HSV    : break;
+        case IMG_MODEL_HSL    : break;
+        case IMG_MODEL_CYMK   : break;
     }
+
+    return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
 }

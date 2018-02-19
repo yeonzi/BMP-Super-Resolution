@@ -1,0 +1,56 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{xeCJK}
+\usepackage{amsmath}
+\usepackage{geometry}
+
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\xeCJKDeclareSubCJKBlock{JP}
+{"0800 -> "4E00}
+\xeCJKDeclareSubCJKBlock{KO}
+{"1100 -> "11FF , "3130 -> "318F , "AC00 -> "D7AF , "A960 -> "A97F , "D7B0 -> "D7FF}
+
+\setmainfont{Times New Roman}
+\setCJKmainfont[KO=Nanum Gothic, JP=YuGothic]{苹方-简}
+
+\title{插值计算式推导}
+\author{Yeonji}
+
+\begin{document}
+
+\maketitle
+
+\section{一维立方插值 Cubic Interpolation}
+
+\begin{equation}
+f(x) = ax^3 + bx^2 + cx + d
+\end{equation}
+
+
+\begin{equation}
+\left\{
+\begin{aligned}
+f(-3) &= -27a + 9b -3c + d\\
+f(-1) &= -a + b - c + d\\
+f(1) &= a + b + c + d\\
+f(3) &= 27a + 9b + 3c + d
+\end{aligned}
+\right.
+\end{equation}
+
+\begin{equation}
+f(0) = -0.0625f(-3) + 0.5625f(-1) + 0.5625f(1) -0.0625f(-3)
+\end{equation}
+
+\section{二维立方插值 Bicubic Interpolation}
+
+\begin{equation}
+\begin{aligned}
+f(x,y) &= \sum_{i=0}^3 \sum_{j=0}^3 a_{ij} x^i y^j\\
+&= a_{00} + a_{01}y + a_{02}y^2 + a_{03}y^3\\
+&+ a_{10}x + a_{11}xy + a_{12}xy^2 + a_{13}xy^3\\
+&+ a_{20}x^2 + a_{21}x^2y + a_{22}x^2y^2 + a_{23}x^2y^3\\
+&+ a_{30}x^3 + a_{31}x^3y + a_{32}x^3y^2 + a_{33}x^3y^3\\
+\end{aligned}
+\end{equation}
+
+\end{document}
