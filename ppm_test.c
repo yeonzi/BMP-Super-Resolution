@@ -1,6 +1,6 @@
 /********************************************************************************
 The MIT License
-Copyright (c) 2017 Yeonji
+Copyright (c) 2018 Yeonji
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -19,34 +19,15 @@ SOFTWARE.
 ********************************************************************************/
 
 #include "bmp.h"
-#include "image.h"
-#include "resize.h"
-#include <stdio.h>
+#include "ppm.h"
 
 int main(void)
 {
-    image_t * image  = NULL;
-    image_t * image2x  = NULL;
-    image_t * img_conv  = NULL;
+	image_t * img;
 
-    image_t * kernel = NULL;
+	img = ppm_load("./test.ppm");
+	bmp_save(img, "./out.bmp");
 
-    image = bmp_load("test.bmp");
-    kernel = kernel_load("./test.kern");
-
-    bmp_save(image, "out.bmp");
-
-    if (image == NULL){
-        return -1;
-    }
-
-    image2x = img_2x_bicubic(image);
-
-    bmp_save(image2x, "test_border_scale_int_line2.bmp");
-
-    img_conv = image_conv(image2x, kernel);
-
-    bmp_save(img_conv, "test_conv.bmp");
-
-    return 0;
+	return 0;
 }
+

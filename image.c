@@ -23,7 +23,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <math.h>
 
-image_t * img_new(size_t width, size_t height, uint8_t model)
+image_t * img_new(int32_t width, int32_t height, uint8_t model)
 {
     image_t * img = NULL;
 
@@ -46,7 +46,9 @@ image_t * img_new(size_t width, size_t height, uint8_t model)
             case IMG_MODEL_HSL    : img->pixel_size = 3 * sizeof(int16_t); break;
             case IMG_MODEL_CYMK   : img->pixel_size = 3 * sizeof(uint8_t); break;
             */
-            case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(uint8_t); break;
+            
+            case IMG_MODEL_YCBCR  : img->pixel_size = 3 * sizeof(float);   break;
+            case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(int32_t); break;
         }
 
         img->data = malloc(img->width * img->height * img->pixel_size);
@@ -77,8 +79,8 @@ int bgr_to_ycbcr(image_t * img)
     float Cb;
     float Cr;
     
-    uint8_t *ip;
-    uint8_t *endp;
+    int32_t *ip;
+    int32_t *endp;
     float   *op;
     float   *wp;
 
@@ -109,6 +111,8 @@ int bgr_to_ycbcr(image_t * img)
     img->data  = op;
     img->model = IMG_MODEL_YCBCR;
 
+    fprintf(stderr, "Image was converted from BGR to YCbCr\n");
+
     return 0;
 }
 
@@ -123,13 +127,13 @@ int ycbcr_to_bgr(image_t * img)
     
     float   *ip;
     float   *endp;
-    uint8_t *op;
-    uint8_t *wp;
+    int32_t *op;
+    int32_t *wp;
 
     ip = img->data;
     endp = ip + 3 * img->width * img->height;
 
-    op = malloc(3 * img->width * img->height * sizeof(uint8_t));
+    op = malloc(3 * img->width * img->height * sizeof(int32_t));
     wp = op;
 
     while (ip < endp) {
@@ -152,6 +156,8 @@ int ycbcr_to_bgr(image_t * img)
     free(img->data);
     img->data  = op;
     img->model = IMG_MODEL_BGR;
+
+    fprintf(stderr, "Image was converted from YCbCr to BGR\n");
 
     return 0;
 }
@@ -181,4 +187,100 @@ int img_convert(image_t * img, uint8_t model)
     }
 
     return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
+}
+
+image_t * img_make_border(image_t * img, int32_t size)
+{
+    image_t * border;
+
+    int32_t *src_ptr;
+    int32_t *dst_ptr;
+
+    int32_t  line;
+    int32_t  column;
+
+    border = img_new(img->width + 2 * size, img->height + 2 * size, img->model);
+
+    /* copy image */
+    for (line = 0; line < img->height; line++) {
+        src_ptr = img->data + 3 * line * img->width * sizeof(int32_t);
+        dst_ptr = border->data + 3 * ((line + size) * border->width + size) * sizeof(int32_t);
+        for(column = 0; column < img->width; column++) {
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+
+    /* up */
+    for (line = 0; line < size; line ++) {
+        src_ptr = img->data;
+        dst_ptr = border->data + 3 * (line * border->width + size) * sizeof(int32_t);
+        for(column = 0; column < img->width; column++) {
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+    
+    /* down */
+    for (line = 0; line < size; line ++) {
+        src_ptr = img->data + 3 * (img->height - 1) * img->width * sizeof(int32_t);
+        dst_ptr = border->data + 3 * ((border->height - line - 1) * border->width + size) * sizeof(int32_t);
+        for(column = 0; column < img->width; column++) {
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+
+    /* left */
+    for (line = 0; line < img->height; line ++) {
+        dst_ptr = border->data + 3 * border->width * (line + size) * sizeof(int32_t);
+        for(column = 0; column < size; column++) {
+            src_ptr = img->data + 3 * line * img->width * sizeof(int32_t);
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+
+    /* right */
+    for (line = 0; line < img->height; line ++) {
+        dst_ptr = border->data + 3 * (border->width * (line + size + 1) - size) * sizeof(int32_t);
+        for(column = 0; column < size; column++) {
+            src_ptr = img->data + 3 * ((line + 1) * img->width - 1) * sizeof(int32_t);
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+
+    return border;
+}
+
+image_t * img_chop_border(image_t * img, int32_t size)
+{
+    image_t * chop;
+
+    int32_t *src_ptr;
+    int32_t *dst_ptr;
+
+    int32_t  line;
+    int32_t  column;
+
+    chop = img_new(img->width - 2 * size, img->height - 2 * size, img->model);
+
+    /* copy image */
+    for (line = 0; line < chop->height; line++) {
+        src_ptr = img->data + 3 * ((line + size + 1) * img->width + size + 1) * sizeof(int32_t);
+        dst_ptr = chop->data + 3 * line * chop->width * sizeof(int32_t);
+        for(column = 0; column < chop->width; column++) {
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+            *dst_ptr++ = *src_ptr++;
+        }
+    }
+
+    return chop;
 }

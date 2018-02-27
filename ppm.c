@@ -1,6 +1,6 @@
 /********************************************************************************
 The MIT License
-Copyright (c) 2017 Yeonji
+Copyright (c) 2018 Yeonji
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -18,35 +18,58 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ********************************************************************************/
 
-#include "bmp.h"
 #include "image.h"
-#include "resize.h"
+#include "ppm.h"
 #include <stdio.h>
 
-int main(void)
+image_t * ppm_load(const char *file_name)
 {
-    image_t * image  = NULL;
-    image_t * image2x  = NULL;
-    image_t * img_conv  = NULL;
+	image_t * img;
 
-    image_t * kernel = NULL;
+	int  num;
+	int  width;
+	int  height;
+	int  R;
+	int  G;
+	int  B;
 
-    image = bmp_load("test.bmp");
-    kernel = kernel_load("./test.kern");
+	uint8_t * ptr;
+	uint8_t * ptr_end;
 
-    bmp_save(image, "out.bmp");
+	FILE * fp;
 
-    if (image == NULL){
-        return -1;
-    }
+	fp = fopen(file_name, "rb");
 
-    image2x = img_2x_bicubic(image);
+	/* Read Magic */
+	fscanf(fp, "P%d", &num);
 
-    bmp_save(image2x, "test_border_scale_int_line2.bmp");
+	if (num != 3) return NULL;
 
-    img_conv = image_conv(image2x, kernel);
+	/* Read info */
+	fscanf(fp, "%d %d", &width, &height);
+	printf("%d x %d pixel\n", width, height);
 
-    bmp_save(img_conv, "test_conv.bmp");
+	fscanf(fp, "%d", &num);
+	if (num != 255) return NULL;
 
-    return 0;
+	img = img_new(width, height, IMG_MODEL_BGR);
+
+	ptr = img->data;
+
+	ptr_end = ptr + 3 * width * height;
+
+	while (ptr < ptr_end) {
+		fscanf(fp, "%d", &R);
+		fscanf(fp, "%d", &G);
+		fscanf(fp, "%d", &B);
+		*ptr = B;
+		ptr++;
+		*ptr = G;
+		ptr++;
+		*ptr = R;
+		ptr++;
+	}
+
+	return img;
 }
+
