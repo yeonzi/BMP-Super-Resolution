@@ -18,35 +18,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ********************************************************************************/
 
-#include "bmp.h"
+#ifndef RESIZE_H
+#define RESIZE_H 1
+
 #include "image.h"
-#include "resize.h"
-#include <stdio.h>
 
-int main(void)
-{
-    image_t * image  = NULL;
-    image_t * image2x  = NULL;
-    image_t * img_conv  = NULL;
+image_t * img_2x(image_t * src);
+image_t * img_resize_bicubic(image_t * img, int32_t newWidth, int32_t newHeight);
+image_t * img_2x_bicubic(image_t * src);
 
-    image_t * kernel = NULL;
-
-    image = bmp_load("test.bmp");
-    kernel = kernel_load("./test.kern");
-
-    bmp_save(image, "out.bmp");
-
-    if (image == NULL){
-        return -1;
-    }
-
-    image2x = img_2x_bicubic(image);
-
-    bmp_save(image2x, "test_border_scale_int_line2.bmp");
-
-    img_conv = image_conv(image2x, kernel);
-
-    bmp_save(img_conv, "test_conv.bmp");
-
-    return 0;
-}
+#endif /* RESIZE_H */

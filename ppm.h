@@ -1,6 +1,6 @@
 /********************************************************************************
 The MIT License
-Copyright (c) 2017 Yeonji
+Copyright (c) 2018 Yeonji
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -18,51 +18,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ********************************************************************************/
 
-#ifndef IMAGE_H
-#define IMAGE_H 1
+#ifndef PPM_H
+#define PPM_H 1
 
-#include <stdint.h>
-#include <stdlib.h>
+#include "image.h"
 
-#define IMG_MODEL_CIEXYZ    0
-#define IMG_MODEL_BGR       1
-#define IMG_MODEL_BGRA      2
-#define IMG_MODEL_YUV       3
-#define IMG_MODEL_YCBCR     4
-#define IMG_MODEL_HSV       5
-#define IMG_MODEL_HSL       6
-#define IMG_MODEL_CYMK      7
-#define IMG_MODEL_GRAY      7
+image_t * ppm_load(const char *file_name);
 
-typedef struct {
-	float Y;
-	float Cb;
-	float Cr;
-} ycbcr_pixel_t;
-
-typedef struct {
-	int32_t B;
-	int32_t G;
-	int32_t R;
-} rgb_pixel_t;
-
-typedef struct {
-    uint8_t     model;
-    int32_t     width;
-    int32_t     height;
-    int32_t     pixel_size;
-    float       bias;
-    float       div;
-    void        *data;
-} image_t;
-
-image_t *   img_new(int32_t width, int32_t height, uint8_t model);
-void        img_free(image_t * img);
-
-int         img_convert(image_t * img, uint8_t model);
-image_t *   img_make_border(image_t * img, int32_t size);
-image_t *   img_chop_border(image_t * img, int32_t size);
-
-#include "image_conv.h"
-
-#endif /* IMAGE_H */
+#endif

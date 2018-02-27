@@ -18,51 +18,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ********************************************************************************/
 
-#ifndef IMAGE_H
-#define IMAGE_H 1
+#include "bmp.h"
+#include "image.h"
+#include "resize.h"
+#include <stdio.h>
 
-#include <stdint.h>
-#include <stdlib.h>
+int main(void)
+{
+    image_t * image  = NULL;
+    image_t * image2x  = NULL;
+    image_t * img_conv  = NULL;
 
-#define IMG_MODEL_CIEXYZ    0
-#define IMG_MODEL_BGR       1
-#define IMG_MODEL_BGRA      2
-#define IMG_MODEL_YUV       3
-#define IMG_MODEL_YCBCR     4
-#define IMG_MODEL_HSV       5
-#define IMG_MODEL_HSL       6
-#define IMG_MODEL_CYMK      7
-#define IMG_MODEL_GRAY      7
+    image_t * kernel = NULL;
 
-typedef struct {
-	float Y;
-	float Cb;
-	float Cr;
-} ycbcr_pixel_t;
+    image = bmp_load("test.bmp");
+    kernel = kernel_load("./test.kern");
 
-typedef struct {
-	int32_t B;
-	int32_t G;
-	int32_t R;
-} rgb_pixel_t;
+    image2x = img_2x_bicubic(image);
 
-typedef struct {
-    uint8_t     model;
-    int32_t     width;
-    int32_t     height;
-    int32_t     pixel_size;
-    float       bias;
-    float       div;
-    void        *data;
-} image_t;
+    img_conv = image_conv(image2x, kernel);
 
-image_t *   img_new(int32_t width, int32_t height, uint8_t model);
-void        img_free(image_t * img);
+    bmp_save(img_conv, "out.bmp");
 
-int         img_convert(image_t * img, uint8_t model);
-image_t *   img_make_border(image_t * img, int32_t size);
-image_t *   img_chop_border(image_t * img, int32_t size);
-
-#include "image_conv.h"
-
-#endif /* IMAGE_H */
+    return 0;
+}
