@@ -17,23 +17,24 @@
 ### 原始图片：
 
 不要问我为啥总是他，真的很想prpr啊（
-![origin](./origin.bmp)
+
+![origin](./origin.png)
 
 ### 强行放大（不进行插值）
 
-![01](./scale_without_interpolation.bmp)
+![01](./scale_without_interpolation.png)
 
 （这张图片可能需要放大之后才能看到效果了……
 
 ### 无聊闲来一次线性插值
 
-![02](./liner_interpolation.bmp)
+![02](./liner_interpolation.png)
 
 已经预计到效果不太好，但是还是放上来了
 
 ### 双立方插值
 
-![03](./bicubic_interpolation.bmp)
+![03](./bicubic_interpolation.png)
 
 emmmmm
 
@@ -41,7 +42,7 @@ emmmmm
 
 ### 对双立方插值结果做一次高斯模糊
 
-![03](./interpolation_and_filter.bmp)
+![03](./interpolation_and_filter.png)
 
 emmmmm
 
