@@ -21,13 +21,7 @@ SOFTWARE.
 #include "image.h"
 #include <stdio.h>
 
-int32_t * image_rgb_pixel(image_t * image, uint32_t x, uint32_t y){
-    return &((int32_t *)image->data)[3 * (y * image->width + x)];
-}
-
-float * image_ycbcr_pixel(image_t * image, uint32_t x, uint32_t y){
-    return &((float *)image->data)[3 * (y * image->width + x)];
-}
+#define image_pixel(image,x,y)  &((float *)image->data)[3 * ((y) * image->width + (x))]
 
 image_t * image_conv(image_t * src, image_t * kernel)
 {
@@ -35,15 +29,17 @@ image_t * image_conv(image_t * src, image_t * kernel)
     image_t * conved;
     image_t * choped;
 
-    size_t    border_size;
-    int32_t   x0;
-    int32_t   y0;
-    int32_t   x1;
-    int32_t   y1;
-    int32_t   dx;
-    int32_t   dy;
-    int32_t   rgb_tmp[3];
-    float   ycbcr_tmp[3];
+    size_t  border_size;
+    int32_t x0;
+    int32_t y0;
+    int32_t x1;
+    int32_t y1;
+    int32_t dx;
+    int32_t dy;
+    float   pixel_tmp[3];
+
+    float * img;
+    float * kern;
 
     if (kernel->model != IMG_MODEL_BGR && kernel->model != IMG_MODEL_YCBCR) {
         fprintf(stderr, "RGB or YCbCr is the only color model supported by conv operation\n");
@@ -60,76 +56,96 @@ image_t * image_conv(image_t * src, image_t * kernel)
 
     border_size = kernel->width>kernel->height?kernel->width:kernel->height;
 
-    border = img_make_border(src, border_size);
+    border = image_make_border(src, border_size);
+    image_convert(border, kernel->model);
+    conved = image_new(border->width, border->height, kernel->model);
 
-    img_convert(border, kernel->model);
-    conved = img_new(border->width, border->height, kernel->model);
-
-    if (kernel->model == IMG_MODEL_BGR) {
-        int32_t * img;
-        int32_t * kern;
-        for(x0 = 0; x0 < border->width - kernel->width; x0++){
-            for(y0 = 0; y0 < border->height - kernel->height; y0++){
-                /* ergodic pixel in image */
-                rgb_tmp[0] = 0;
-                rgb_tmp[1] = 0;
-                rgb_tmp[2] = 0;
-                for(x1 = 0; x1 < kernel->width; x1++){
-                    for(y1 = 0; y1 < kernel->height; y1++){
-                        img  = image_rgb_pixel(border, x0+x1, y0+y1);
-                        kern = image_rgb_pixel(kernel, x1, y1);
-                        rgb_tmp[0] += kern[0] * img[0];
-                        rgb_tmp[1] += kern[1] * img[1];
-                        rgb_tmp[2] += kern[2] * img[2];
-                    }
+    for(x0 = 0; x0 < border->width - kernel->width; x0++){
+        for(y0 = 0; y0 < border->height - kernel->height; y0++){
+            /* ergodic pixel in image */
+            pixel_tmp[0] = 0;
+            pixel_tmp[1] = 0;
+            pixel_tmp[2] = 0;
+            for(x1 = 0; x1 < kernel->width; x1++){
+                for(y1 = 0; y1 < kernel->height; y1++){
+                    img  = image_pixel(border, x0+x1, y0+y1);
+                    kern = image_pixel(kernel, x1, y1);
+                    pixel_tmp[0] += kern[0] * img[0];
+                    pixel_tmp[1] += kern[1] * img[1];
+                    pixel_tmp[2] += kern[2] * img[2];
                 }
-                rgb_tmp[0] = rgb_tmp[0]/kernel->div + kernel->bias;
-                rgb_tmp[1] = rgb_tmp[1]/kernel->div + kernel->bias;
-                rgb_tmp[2] = rgb_tmp[2]/kernel->div + kernel->bias;
-
-                img  = image_rgb_pixel(conved, x0+dx, y0+dy);
-                img[0] = rgb_tmp[0];
-                img[1] = rgb_tmp[1];
-                img[2] = rgb_tmp[2];
-                
             }
-        }
-    } else if (kernel->model == IMG_MODEL_YCBCR) {
-        float * img;
-        float * kern;
-        for(x0 = 0; x0 < border->width - kernel->width; x0++){
-            for(y0 = 0; y0 < border->height - kernel->height; y0++){
-                /* ergodic pixel in image */
-                ycbcr_tmp[0] = 0;
-                ycbcr_tmp[1] = 0;
-                ycbcr_tmp[2] = 0;
-                for(x1 = 0; x1 < kernel->width; x1++){
-                    for(y1 = 0; y1 < kernel->height; y1++){
-                        img  = image_ycbcr_pixel(border, x0+x1, y0+y1);
-                        kern = image_ycbcr_pixel(kernel, x1, y1);
-                        ycbcr_tmp[0] += kern[0] * img[0];
-                        ycbcr_tmp[1] += kern[1] * img[1];
-                        ycbcr_tmp[2] += kern[2] * img[2];
-                    }
-                }
-                ycbcr_tmp[0] = ycbcr_tmp[0] / kernel->div + kernel->bias;
-                ycbcr_tmp[1] = ycbcr_tmp[1] / kernel->div + kernel->bias;
-                ycbcr_tmp[2] = ycbcr_tmp[2] / kernel->div + kernel->bias;
+            pixel_tmp[0] = pixel_tmp[0] / kernel->div + kernel->bias;
+            pixel_tmp[1] = pixel_tmp[1] / kernel->div + kernel->bias;
+            pixel_tmp[2] = pixel_tmp[2] / kernel->div + kernel->bias;
 
-                img  = image_ycbcr_pixel(conved, x0+dx, y0+dy);
-                img[0] = ycbcr_tmp[0];
-                img[1] = ycbcr_tmp[1];
-                img[2] = ycbcr_tmp[2];
-                
-            }
+            img  = image_pixel(conved, x0+dx, y0+dy);
+            img[0] = pixel_tmp[0];
+            img[1] = pixel_tmp[1];
+            img[2] = pixel_tmp[2];
+            
         }
     }
 
-    choped = img_chop_border(conved, border_size);
+    choped = image_chop_border(conved, border_size);
 
-    img_free(border);
+    image_free(border);
 
     return choped;
+}
+
+image_t * image_conv_raw(image_t * src, image_t * kernel)
+{
+    image_t * conved;    
+
+    size_t    border_size;
+    int32_t   x0;
+    int32_t   y0;
+    int32_t   x1;
+    int32_t   y1;
+    int32_t   dx;
+    int32_t   dy;
+    float   pixel_tmp[3];
+    float * img;
+    float * kern;
+
+    dx = kernel->width / 2;
+    dy = kernel->height / 2;
+
+    border_size = kernel->width>kernel->height?kernel->width:kernel->height;
+
+    image_convert(src, kernel->model);
+
+    conved = image_new(src->width, src->height, kernel->model);
+
+    for(x0 = 0; x0 < src->width - kernel->width; x0++){
+        for(y0 = 0; y0 < src->height - kernel->height; y0++){
+            /* ergodic pixel in image */
+            pixel_tmp[0] = 0;
+            pixel_tmp[1] = 0;
+            pixel_tmp[2] = 0;
+            for(x1 = 0; x1 < kernel->width; x1++){
+                for(y1 = 0; y1 < kernel->height; y1++){
+                    img  = image_pixel(src, x0+x1, y0+y1);
+                    kern = image_pixel(kernel, x1, y1);
+                    pixel_tmp[0] += kern[0] * img[0];
+                    pixel_tmp[1] += kern[1] * img[1];
+                    pixel_tmp[2] += kern[2] * img[2];
+                }
+            }
+            pixel_tmp[0] = pixel_tmp[0] / kernel->div + kernel->bias;
+            pixel_tmp[1] = pixel_tmp[1] / kernel->div + kernel->bias;
+            pixel_tmp[2] = pixel_tmp[2] / kernel->div + kernel->bias;
+
+            img  = image_pixel(conved, x0+dx, y0+dy);
+            img[0] = pixel_tmp[0];
+            img[1] = pixel_tmp[1];
+            img[2] = pixel_tmp[2];
+            
+        }
+    }
+
+    return conved;
 }
 
 image_t * kernel_load(const char * file_name)
@@ -140,11 +156,8 @@ image_t * kernel_load(const char * file_name)
     int  width;
     int  height;
 
-    int32_t * ptr;
-    int32_t * ptr_end;
-
-    float * Yptr;
-    float * Yptr_end;
+    float * ptr;
+    float * ptr_end;
 
     FILE * fp;
 
@@ -160,26 +173,22 @@ image_t * kernel_load(const char * file_name)
 
     fscanf(fp, "%d", &num);
     if (num == 255) {
-        img = img_new(width, height, IMG_MODEL_BGR);
-        ptr = img->data;
-        ptr_end = &ptr[3 * width * height];
-        fscanf(fp, "%f %f", &img->bias, &img->div);
-        while (ptr < ptr_end) {
-            fscanf(fp, "%d", ptr);
-            ptr ++;
-        }
+        img = image_new(width, height, IMG_MODEL_BGR);
     } else if (num == 256) {
-        img = img_new(width, height, IMG_MODEL_YCBCR);
-        Yptr = img->data;
-        Yptr_end = &Yptr[3 * width * height];
-        fscanf(fp, "%f %f", &img->bias, &img->div);
-        while (Yptr < Yptr_end) {
-            fscanf(fp, "%f", Yptr);
-            Yptr ++;
-        }
+        img = image_new(width, height, IMG_MODEL_YCBCR);
     } else {
         return NULL;
     }
+
+    ptr = img->data;
+    ptr_end = &ptr[3 * width * height];
+    fscanf(fp, "%f %f", &img->bias, &img->div);
+    while (ptr < ptr_end) {
+        fscanf(fp, "%f", ptr);
+        ptr ++;
+    }
+
+    fclose(fp);
 
     return img;
 }

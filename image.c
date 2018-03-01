@@ -23,7 +23,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <math.h>
 
-image_t * img_new(int32_t width, int32_t height, uint8_t model)
+image_t * image_new(int32_t width, int32_t height, uint8_t model)
 {
     image_t * img = NULL;
 
@@ -48,7 +48,7 @@ image_t * img_new(int32_t width, int32_t height, uint8_t model)
             */
             
             case IMG_MODEL_YCBCR  : img->pixel_size = 3 * sizeof(float);   break;
-            case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(int32_t); break;
+            case IMG_MODEL_BGR    : img->pixel_size = 3 * sizeof(float);   break;
         }
 
         img->data = malloc(img->width * img->height * img->pixel_size);
@@ -62,11 +62,12 @@ image_t * img_new(int32_t width, int32_t height, uint8_t model)
     return NULL;
 }
 
-void img_free(image_t * img)
+void image_free(image_t * img)
 {
     do {
         if (img == NULL) break;
         if (img->data != NULL) free(img->data);
+        free(img);
     } while (0);
 }
 
@@ -79,36 +80,28 @@ int bgr_to_ycbcr(image_t * img)
     float Cb;
     float Cr;
     
-    int32_t *ip;
-    int32_t *endp;
-    float   *op;
-    float   *wp;
+    float *ip;
+    float *endp;
 
     ip = img->data;
-    endp = ip + 3 * img->width * img->height;
-
-    op = malloc(3 * img->width * img->height * sizeof(float));
-    wp = op;
+    endp = &ip[3 * img->width * img->height];
 
     while (ip < endp) {
         B = ip[0];
         G = ip[1];
         R = ip[2];
 
-        Y  =       + (0.299    * R) + (0.587    * G) + (0.114 * B);
-        Cb = 128.0 - (0.168736 * R) - (0.331264 * G) + (0.5 * B);
+        Y  =       + (0.299    * R) + (0.587    * G) + (0.114    * B);
+        Cb = 128.0 - (0.168736 * R) - (0.331264 * G) + (0.5      * B);
         Cr = 128.0 + (0.5      * R) - (0.418688 * G) - (0.081312 * B);
 
-        wp[0] = Y;
-        wp[1] = Cb;
-        wp[2] = Cr;
+        ip[0] = Y;
+        ip[1] = Cb;
+        ip[2] = Cr;
 
-        ip += 3;
-        wp += 3;
+        ip = &ip[3];
     }
 
-    free(img->data);
-    img->data  = op;
     img->model = IMG_MODEL_YCBCR;
 
     fprintf(stderr, "Image was converted from BGR to YCbCr\n");
@@ -125,16 +118,11 @@ int ycbcr_to_bgr(image_t * img)
     float Cb;
     float Cr;
     
-    float   *ip;
-    float   *endp;
-    int32_t *op;
-    int32_t *wp;
+    float *ip;
+    float *endp;
 
     ip = img->data;
-    endp = ip + 3 * img->width * img->height;
-
-    op = malloc(3 * img->width * img->height * sizeof(int32_t));
-    wp = op;
+    endp = &ip[3 * img->width * img->height];
 
     while (ip < endp) {
         Y  = ip[0];
@@ -145,16 +133,13 @@ int ycbcr_to_bgr(image_t * img)
         G = Y - 0.344136 * (Cb - 128) - 0.714136 * (Cr - 128);
         B = Y +    1.772 * (Cb - 128);
 
-        wp[0] = (uint8_t)round(B);
-        wp[1] = (uint8_t)round(G);
-        wp[2] = (uint8_t)round(R);
+        ip[0] = round(B);
+        ip[1] = round(G);
+        ip[2] = round(R);
 
-        ip += 3;
-        wp += 3;
+        ip = &ip[3];
     }
 
-    free(img->data);
-    img->data  = op;
     img->model = IMG_MODEL_BGR;
 
     fprintf(stderr, "Image was converted from YCbCr to BGR\n");
@@ -162,7 +147,7 @@ int ycbcr_to_bgr(image_t * img)
     return 0;
 }
 
-int img_convert(image_t * img, uint8_t model)
+int image_convert(image_t * img, uint8_t model)
 {
     if (model == img->model) return 0;
     switch (model) {
@@ -189,22 +174,22 @@ int img_convert(image_t * img, uint8_t model)
     return fprintf(stderr, "%s(): Not implemented\n", __FUNCTION__);
 }
 
-image_t * img_make_border(image_t * img, int32_t size)
+image_t * image_make_border(image_t * img, int32_t size)
 {
     image_t * border;
 
-    int32_t *src_ptr;
-    int32_t *dst_ptr;
+    float   *src_ptr;
+    float   *dst_ptr;
 
     int32_t  line;
     int32_t  column;
 
-    border = img_new(img->width + 2 * size, img->height + 2 * size, img->model);
+    border = image_new(img->width + 2 * size, img->height + 2 * size, img->model);
 
     /* copy image */
     for (line = 0; line < img->height; line++) {
-        src_ptr = img->data + 3 * line * img->width * sizeof(int32_t);
-        dst_ptr = border->data + 3 * ((line + size) * border->width + size) * sizeof(int32_t);
+        src_ptr = &((float*)img->data)[3 * line * img->width];
+        dst_ptr = &((float*)border->data)[3 * ((line + size) * border->width + size)];
         for(column = 0; column < img->width; column++) {
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -215,7 +200,7 @@ image_t * img_make_border(image_t * img, int32_t size)
     /* up */
     for (line = 0; line < size; line ++) {
         src_ptr = img->data;
-        dst_ptr = border->data + 3 * (line * border->width + size) * sizeof(int32_t);
+        dst_ptr = &((float*)border->data)[3 * (line * border->width + size)];
         for(column = 0; column < img->width; column++) {
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -225,8 +210,8 @@ image_t * img_make_border(image_t * img, int32_t size)
     
     /* down */
     for (line = 0; line < size; line ++) {
-        src_ptr = img->data + 3 * (img->height - 1) * img->width * sizeof(int32_t);
-        dst_ptr = border->data + 3 * ((border->height - line - 1) * border->width + size) * sizeof(int32_t);
+        src_ptr = &((float*)img->data)[3 * (img->height - 1) * img->width];
+        dst_ptr = &((float*)border->data)[3 * ((border->height - line - 1) * border->width + size)];
         for(column = 0; column < img->width; column++) {
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -236,9 +221,9 @@ image_t * img_make_border(image_t * img, int32_t size)
 
     /* left */
     for (line = 0; line < img->height; line ++) {
-        dst_ptr = border->data + 3 * border->width * (line + size) * sizeof(int32_t);
+        dst_ptr = &((float*)border->data)[3 * border->width * (line + size)];
         for(column = 0; column < size; column++) {
-            src_ptr = img->data + 3 * line * img->width * sizeof(int32_t);
+            src_ptr = &((float*)img->data)[3 * line * img->width];
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -247,9 +232,9 @@ image_t * img_make_border(image_t * img, int32_t size)
 
     /* right */
     for (line = 0; line < img->height; line ++) {
-        dst_ptr = border->data + 3 * (border->width * (line + size + 1) - size) * sizeof(int32_t);
+        dst_ptr = &((float*)border->data)[3 * (border->width * (line + size + 1) - size)];
         for(column = 0; column < size; column++) {
-            src_ptr = img->data + 3 * ((line + 1) * img->width - 1) * sizeof(int32_t);
+            src_ptr = &((float*)img->data)[3 * ((line + 1) * img->width - 1)];
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -259,22 +244,22 @@ image_t * img_make_border(image_t * img, int32_t size)
     return border;
 }
 
-image_t * img_chop_border(image_t * img, int32_t size)
+image_t * image_chop_border(image_t * img, int32_t size)
 {
     image_t * chop;
 
-    int32_t *src_ptr;
-    int32_t *dst_ptr;
+    float   *src_ptr;
+    float   *dst_ptr;
 
     int32_t  line;
     int32_t  column;
 
-    chop = img_new(img->width - 2 * size, img->height - 2 * size, img->model);
+    chop = image_new(img->width - 2 * size, img->height - 2 * size, img->model);
 
     /* copy image */
     for (line = 0; line < chop->height; line++) {
-        src_ptr = img->data + 3 * ((line + size + 1) * img->width + size + 1) * sizeof(int32_t);
-        dst_ptr = chop->data + 3 * line * chop->width * sizeof(int32_t);
+        src_ptr = &((float*)img->data)[3 * ((line + size + 1) * img->width + size + 1)];
+        dst_ptr = &((float*)chop->data)[3 * line * chop->width];
         for(column = 0; column < chop->width; column++) {
             *dst_ptr++ = *src_ptr++;
             *dst_ptr++ = *src_ptr++;
@@ -283,4 +268,80 @@ image_t * img_chop_border(image_t * img, int32_t size)
     }
 
     return chop;
+}
+
+image_t * image_gray(image_t * img)
+{
+    float B;
+    float G;
+    float R;
+    float Y;
+    
+    float *ip;
+    float *endp;
+
+    image_convert(img, IMG_MODEL_BGR);
+
+    ip = img->data;
+    endp = &ip[3 * img->width * img->height];
+
+    while (ip < endp) {
+        B = ip[0];
+        G = ip[1];
+        R = ip[2];
+
+        Y = (0.299 * R) + (0.587 * G) + (0.114 * B);
+
+        ip[0] = Y;
+        ip[1] = Y;
+        ip[2] = Y;
+
+        ip = &ip[3];
+    }
+
+    return img;
+}
+
+float image_max(image_t * img, int channel)
+{
+    float max;
+    
+    float *ip;
+    float *endp;
+
+    ip = img->data;
+    endp = &ip[3 * img->width * img->height];
+
+    ip = &ip[channel];
+
+    max = *ip;
+
+    while (ip < endp) {
+        if(*ip > max) max = *ip;
+        ip = &ip[3];
+    }
+
+    return max;
+}
+
+float image_min(image_t * img, int channel)
+{
+    float min;
+    
+    float *ip;
+    float *endp;
+
+    ip = img->data;
+    endp = &ip[3 * img->width * img->height];
+
+    ip = &ip[channel];
+
+    min = *ip;
+
+    while (ip < endp) {
+        if(*ip < min) min = *ip;
+        ip = &ip[3];
+    }
+
+    return min;
 }

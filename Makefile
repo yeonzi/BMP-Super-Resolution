@@ -1,9 +1,9 @@
 CC     = clang
-CFLAGS = -std=c99 -Os -Wall -Wextra
+CFLAGS = -std=c99 -g -mfma -O3 -Wall -Wextra
 
 all: bsr
 
-bsr: bmp.o image.o resize.o image_conv.o main.c
+bsr: bmp.o image.o image_resize.o image_conv.o image_merge.o main.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c

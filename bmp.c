@@ -344,7 +344,7 @@ int decode_data_24(bmp_file_t *bmp)
     int32_t column  = 0;
 
     uint8_t *src;
-    int32_t *dst = bmp->image->data;
+    float   *dst = bmp->image->data;
 
     int32_t width;
 
@@ -376,7 +376,8 @@ int encode_data_24(bmp_file_t *bmp)
     int32_t line    = bmp->image->height;
     int32_t column  = 0;
 
-    int32_t *src;
+    float   *src;
+    int32_t samp;
     uint8_t *dst;
 
     int32_t width;
@@ -394,9 +395,12 @@ int encode_data_24(bmp_file_t *bmp)
     dst = bmp->raw_data;
 
     for (line--; line >= 0; line--) {
-        src = bmp->image->data + line * width * sizeof(int32_t);
+        src = &((float*)bmp->image->data)[line * width];
         for(column = 0; column < width; column++) {
-            *dst = *src;
+            samp = round(*src);
+            if (samp > 255) samp = 255;
+            if (samp < 0) samp = 0;
+            *dst = samp;
             src ++;
             dst ++;
         }
@@ -438,7 +442,7 @@ image_t * bmp_load(const char *file_name)
         if (read_info(&bmp) != 0)   break;
         if (read_data(&bmp) != 0)   break;
 
-        bmp.image = img_new(bmp.info.biWidth, bmp.info.biHeight, IMG_MODEL_BGR);
+        bmp.image = image_new(bmp.info.biWidth, bmp.info.biHeight, IMG_MODEL_BGR);
 
         if (bmp.image == NULL) break;
 
@@ -446,12 +450,14 @@ image_t * bmp_load(const char *file_name)
 
         free(bmp.raw_data);
 
+        fclose(bmp.fp);
+
         return bmp.image;
 
     } while (0);
 
     if (bmp.raw_data != NULL) free(bmp.raw_data);
-    if (bmp.image != NULL) img_free(bmp.image);
+    if (bmp.image != NULL) image_free(bmp.image);
     return NULL;
 }
 
@@ -463,7 +469,7 @@ int bmp_save(image_t * img, const char *file_name)
     uint32_t  file_size;
 
     do {
-        img_convert(img, IMG_MODEL_BGR);
+        //image_convert(img, IMG_MODEL_BGR);
 
         memset(&bmp, 0, sizeof(bmp_file_t));
 

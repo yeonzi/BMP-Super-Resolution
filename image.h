@@ -35,18 +35,6 @@ SOFTWARE.
 #define IMG_MODEL_GRAY      7
 
 typedef struct {
-	float Y;
-	float Cb;
-	float Cr;
-} ycbcr_pixel_t;
-
-typedef struct {
-	int32_t B;
-	int32_t G;
-	int32_t R;
-} rgb_pixel_t;
-
-typedef struct {
     uint8_t     model;
     int32_t     width;
     int32_t     height;
@@ -56,13 +44,16 @@ typedef struct {
     void        *data;
 } image_t;
 
-image_t *   img_new(int32_t width, int32_t height, uint8_t model);
-void        img_free(image_t * img);
+image_t *   image_new(int32_t width, int32_t height, uint8_t model);
+void        image_free(image_t * img);
 
-int         img_convert(image_t * img, uint8_t model);
-image_t *   img_make_border(image_t * img, int32_t size);
-image_t *   img_chop_border(image_t * img, int32_t size);
+int         image_convert(image_t * img, uint8_t model);
+image_t *   image_make_border(image_t * img, int32_t size);
+image_t *   image_chop_border(image_t * img, int32_t size);
 
-#include "image_conv.h"
+image_t * image_gray(image_t * img);
+float image_max(image_t * img, int channel);
+float image_min(image_t * img, int channel);
+float image_min(image_t * img, int channel);
 
 #endif /* IMAGE_H */
