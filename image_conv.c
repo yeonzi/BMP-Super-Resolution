@@ -215,7 +215,11 @@ cl_device_id select_device(void)
     } 
 
     /* Access a device */
+#ifdef USE_GPU
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+#else
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+#endif
 
     if(err == CL_DEVICE_NOT_FOUND) {
       err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_DEFAULT, 1, &device, NULL);
@@ -228,31 +232,29 @@ cl_device_id select_device(void)
 
     /* Print device info */
     clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(buf), buf ,NULL);
-    printf("\r\033[KDevice %s ", buf);
+    printf("\r\033[KDevice: %s ", buf);
     clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(buf), buf ,NULL);
     printf("%s selected\n", buf);
-
     return device;
 }
 
 
 /* Create program from a file and compile it */
-cl_program build_program(cl_context content, cl_device_id devices) {
+cl_program load_program(cl_context context, cl_device_id devices) {
 
     cl_program program;
     FILE    *program_handle;
     static size_t   program_size = 0;
-    static char    *program_buffer;   
+    static size_t   binary_size = 0;
+    static char    *program_buffer; 
+    static char    *program_binary; 
     size_t   log_size;
     char    *program_log;
     int      err;
-    // extern char  *program_binary;
-    // extern size_t binary_size;
-    extern char program_code[];
-    extern size_t code_size;
 
     if (program_size == 0) {
         /* Read program file and place content into buffer */
+        fprintf(stderr, "OpenCL load program from source\n");
         program_handle = fopen("./image_conv.cl", "r");
         if(program_handle == NULL) {
             perror("Couldn't find the program file");
@@ -269,27 +271,44 @@ cl_program build_program(cl_context content, cl_device_id devices) {
         program_buffer[program_size] = '\0';
         fread(program_buffer, sizeof(char), program_size, program_handle);
         fclose(program_handle);
+
+        /* Create program from file */
+        program = clCreateProgramWithSource(context, 1, (const char**)&program_buffer, &program_size, &err);
+        if(err < 0) {
+            perror("Couldn't create the program");
+            exit(1);
+        }
+
+        /* Build program */
+        err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+
+        if(err < 0) {
+            /* Find size of log and print to std output */
+            clGetProgramBuildInfo(program, devices, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+            program_log = malloc(log_size + 1);
+            program_log[log_size] = '\0';
+            clGetProgramBuildInfo(program, devices, CL_PROGRAM_BUILD_LOG, log_size + 1, program_log, NULL);
+            printf("%s\n", program_log);
+            free(program_log);
+            exit(1);
+        }
+
+        clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_size, NULL);
+        program_binary = malloc(binary_size + 1);
+        clGetProgramInfo(program, CL_PROGRAM_BINARIES, binary_size, &program_binary, NULL);
+
+        // program_handle = fopen("./image_conv.clbin", "wb");
+        // fwrite(program_binary, sizeof(char), binary_size, program_handle);
+        // fclose(program_handle);
+
+        return program;
+
     }
 
-    /* Create program from file */
-    program = clCreateProgramWithSource(content, 1, (const char**)&program_buffer, &program_size, &err);
-    if(err < 0) {
-        perror("Couldn't create the program");
-        exit(1);
-    }
+    fprintf(stderr, "OpenCL load program from binary\n");
 
-    /* Build program */
-    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if(err < 0) {
-        /* Find size of log and print to std output */
-        clGetProgramBuildInfo(program, devices, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-        program_log = malloc(log_size + 1);
-        program_log[log_size] = '\0';
-        clGetProgramBuildInfo(program, devices, CL_PROGRAM_BUILD_LOG, log_size + 1, program_log, NULL);
-        printf("%s\n", program_log);
-        free(program_log);
-        exit(1);
-    }
+    program = clCreateProgramWithBinary(context, 1, &devices, (const size_t *)&binary_size, (const unsigned char **)&program_buffer, NULL, &err);
+
 
     // clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, NULL, &binary_size);
     // program_binary = malloc(binary_size + 1);
@@ -306,9 +325,9 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     extern size_t        binary_size;
     static int           opencl_inited;
 
-    cl_int          err;
-    cl_context      context;
-    cl_program      program;
+    static cl_int          err;
+    static cl_context      context;
+    static cl_program      program;
     cl_kernel       kernel;
     cl_mem          src_buf;
     cl_mem          kern_buf;
@@ -341,27 +360,34 @@ image_t * opencl_conv(image_t * src, image_t * kern)
 
     if (!opencl_inited) {
         device  = select_device();
+        context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+
+    program = load_program(context, device);
         opencl_inited = 1;
-        if(err < 0) {
-            perror("Couldn't create a kernel");
-            exit(1);
-        }
     }
 
-    context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
-    program = build_program(context, device);
-    kernel  = clCreateKernel(program, "conv", &err);
 
+    kernel  = clCreateKernel(program, "conv", &err);
+    if(err < 0) {
+        perror("Couldn't create a buffer 370");
+        exit(-1);   
+    }
+
+#ifdef USE_GPU
     src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
     kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
     out_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
-
+#else
+    src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
+    kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
+    out_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
+#endif
     if(err < 0) {
         perror("Couldn't create a buffer");
         exit(-1);   
     }
 
-    queue = clCreateCommandQueue(context, device, 0, &err);
+    queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
     if(err < 0) {
         perror("Couldn't create a command queue");
         exit(1);   
@@ -395,12 +421,10 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     }
 
     clReleaseKernel(kernel);
-    clReleaseProgram(program);
     clReleaseMemObject(src_buf);
     clReleaseMemObject(kern_buf);
     clReleaseMemObject(out_buf);
     clReleaseCommandQueue(queue);
-    clReleaseContext(context);
 
     return conved;
 }

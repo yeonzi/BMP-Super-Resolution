@@ -90,7 +90,7 @@ int main(void)
     image_t ** OutputPlane;
 
     char filter[32];
-    char output[32];
+    //char output[32];
 
     int i;
     int j;
