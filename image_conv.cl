@@ -18,14 +18,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ********************************************************************************/
 
-#ifndef CONV_H
-#define CONV_H 1
 
-#include "image.h"
+__kernel void conv(
+    __global float * image,
+    __global float * kern,
+    __global float * image_out,
+    int image_width,
+    int kernel_width,
+    int kernel_height,
+    int dx,
+    int dy,
+    float bias,
+    float div)
+{
+    int     x0;
+    int     y0;
+    int     x1;
+    int     y1;
+    float   CH0;
+    float   CH1;
+    float   CH2;
 
-image_t * image_conv(image_t * src, image_t * kernel);
-image_t * image_conv_raw(image_t * src, image_t * kernel);
-image_t * kernel_load(const char * file_name);
-image_t * opencl_conv(image_t * src, image_t * kern);
+    x0 = get_global_id(0);
+    y0 = get_global_id(1);
 
-#endif /* CONV_H */
+    CH0 = 0;
+    CH1 = 0;
+    CH2 = 0;
+    for(x1 = 0; x1 < kernel_width; x1++) {
+        for(y1 = 0; y1 < kernel_height; y1++) {
+            CH0 += kern[3 * (y1 * kernel_width + x1) + 0] * image[ 3 * ((y0 + y1) * image_width + (x0 + x1)) + 0];
+            CH1 += kern[3 * (y1 * kernel_width + x1) + 1] * image[ 3 * ((y0 + y1) * image_width + (x0 + x1)) + 1];
+            CH2 += kern[3 * (y1 * kernel_width + x1) + 2] * image[ 3 * ((y0 + y1) * image_width + (x0 + x1)) + 2];
+        }
+    }
+    image_out[ 3 * ((y0 + dy) * image_width + x0 + dx) + 0] = CH0 / div + bias;
+    image_out[ 3 * ((y0 + dy) * image_width + x0 + dx) + 1] = CH1 / div + bias;
+    image_out[ 3 * ((y0 + dy) * image_width + x0 + dx) + 2] = CH2 / div + bias;
+}

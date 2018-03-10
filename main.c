@@ -116,11 +116,11 @@ int main(void)
     ******************************/
 
     for (i = 0; i < 32; i++) {
-        fprintf(stderr, "\rRound 1 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 1 Output Plane %02d  ", i);
 
         sprintf(filter, "./filters/filter-1-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[0], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[0], kernel);
         image_free(kernel);
     }
 
@@ -128,17 +128,19 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 1 Finished.\n");
+
     /******************************
         Round 2
     ******************************/
 
     for (i = 0; i < 32; i++) {
         for (j = 0; j < 32; j++) {
-            fprintf(stderr, "\rRound 2 Plane %02d Image %02d  ", i, j);
+            fprintf(stderr, "\rRuning CNN Round 2 Output Plane %02d Input Plane %02d  ", i, j);
             
             sprintf(filter, "./filters/filter-2-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = image_conv_raw(InputPlane[j], kernel);
+            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
         }
         OutputPlane[i] = image_merge(InnerPlane, 32, IMG_MERGE_ADD);
         img_std(OutputPlane[i], 0);
@@ -152,21 +154,25 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 2 Finished.\n");
+
     /******************************
         Round 3
     ******************************/
 
     for (i = 0; i < 32; i++) {
-        fprintf(stderr, "\rRound 3 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 3 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-3-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
     for (i = 0; i < 32; i++) {
         image_free(InputPlane[i]);
         InputPlane[i] = OutputPlane[i];
     }
+
+    fprintf(stderr, "\r\033[KCNN Round 3 Finished.\n");
 
     /******************************
         Round 4
@@ -174,11 +180,11 @@ int main(void)
 
     for (i = 0; i < 64; i++) {
         for (j = 0; j < 32; j++) {
-            fprintf(stderr, "\rRound 4 Plane %02d Image %02d  ", i, j);
+            fprintf(stderr, "\rRuning CNN Round 4 Output Plane %02d Input Plane %02d  ", i, j);
             
             sprintf(filter, "./filters/filter-4-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = image_conv_raw(InputPlane[j], kernel);
+            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
         }
         OutputPlane[i] = image_merge(InnerPlane, 32, IMG_MERGE_ADD);
         img_std(OutputPlane[i], 0);
@@ -195,21 +201,25 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 4 Finished.\n");
+
     /******************************
         Round 5
     ******************************/
 
     for (i = 0; i < 64; i++) {
-        fprintf(stderr, "\rRound 5 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 5 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-5-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
     for (i = 0; i < 64; i++) {
         image_free(InputPlane[i]);
         InputPlane[i] = OutputPlane[i];
     }
+
+    fprintf(stderr, "\r\033[KCNN Round 5 Finished.\n");
 
     /******************************
         Round 6
@@ -217,11 +227,11 @@ int main(void)
 
     for (i = 0; i < 64; i++) {
         for (j = 0; j < 64; j++) {
-            fprintf(stderr, "\rRound 6 Plane %02d Image %02d  ", i, j);
+            fprintf(stderr, "\rRuning CNN Round 6 Output Plane %02d Input Plane %02d  ", i, j);
             
             sprintf(filter, "./filters/filter-6-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = image_conv_raw(InputPlane[j], kernel);
+            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
         }
         OutputPlane[i] = image_merge(InnerPlane, 64, IMG_MERGE_ADD);
         img_std(OutputPlane[i], 0);
@@ -238,21 +248,25 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 6 Finished.\n");
+
     /******************************
         Round 7
     ******************************/
 
     for (i = 0; i < 64; i++) {
-        fprintf(stderr, "\rRound 7 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 7 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-7-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
     for (i = 0; i < 64; i++) {
         image_free(InputPlane[i]);
         InputPlane[i] = OutputPlane[i];
     }
+
+    fprintf(stderr, "\r\033[KCNN Round 7 Finished.\n");
 
     /******************************
         Round 8
@@ -260,11 +274,11 @@ int main(void)
 
     for (i = 0; i < 128; i++) {
         for (j = 0; j < 64; j++) {
-            fprintf(stderr, "\rRound 8 Plane %02d Image %02d  ", i, j);
+            fprintf(stderr, "\rRuning CNN Round 8 Output Plane %02d Input Plane %02d  ", i, j);
             
             sprintf(filter, "./filters/filter-8-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = image_conv_raw(InputPlane[j], kernel);
+            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
         }
         OutputPlane[i] = image_merge(InnerPlane, 64, IMG_MERGE_ADD);
         img_std(OutputPlane[i], 0);
@@ -281,15 +295,17 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 8 Finished.\n");
+
     /******************************
         Round 9
     ******************************/
 
     for (i = 0; i < 128; i++) {
-        fprintf(stderr, "\rRound 9 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 9 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-9-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
     for (i = 0; i < 128; i++) {
@@ -297,17 +313,19 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 9 Finished.\n");
+
     /******************************
         Round 10
     ******************************/
 
     for (i = 0; i < 128; i++) {
         for (j = 0; j < 128; j++) {
-            fprintf(stderr, "\rRound 10 Plane %02d Image %02d  ", i, j);
+            fprintf(stderr, "\rRuning CNN Round 10 Output Plane %02d Input Plane %02d  ", i, j);
             
             sprintf(filter, "./filters/filter-10-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = image_conv_raw(InputPlane[j], kernel);
+            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
         }
         OutputPlane[i] = image_merge(InnerPlane, 128, IMG_MERGE_ADD);
         img_std(OutputPlane[i], 0);
@@ -324,15 +342,17 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 10 Finished.                                \n");
+
     /******************************
         Round 11
     ******************************/
 
     for (i = 0; i < 128; i++) {
-        fprintf(stderr, "\rRound 11 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 11 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-11-%02d", i);
         kernel = kernel_load(filter);
-        OutputPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
     for (i = 0; i < 128; i++) {
@@ -340,32 +360,41 @@ int main(void)
         InputPlane[i] = OutputPlane[i];
     }
 
+    fprintf(stderr, "\r\033[KCNN Round 11 Finished.\n");
+
     /******************************
         Round 12
     ******************************/
 
     for (i = 0; i < 128; i++) {
-        fprintf(stderr, "\rRound 12 Plane %02d  ", i);
+        fprintf(stderr, "\rRuning CNN Round 12 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-12-%02d", i);
         kernel = kernel_load(filter);
-        InnerPlane[i] = image_conv_raw(InputPlane[i], kernel);
+        InnerPlane[i] = opencl_conv(InputPlane[i], kernel);
     }
 
-    fprintf(stderr, "\rRound 12 Conv Success");
+    fprintf(stderr, "\r\033[KCNN Round 12 Finished.\n");
+
+    fprintf(stderr, "Merge ...");
 
     OutputPlane[0] = image_merge(InnerPlane, 128, IMG_MERGE_ADD);
+
+    fprintf(stderr, " Finished.\n");
+
+    fprintf(stderr, "Rejust ...");
+
     img_std(OutputPlane[0], 0);
     img_std2(OutputPlane[0], 0, max);
     img_ch_past(image, OutputPlane[0], 0);
 
-    fprintf(stderr, "\rRound 12 merge success");
+    fprintf(stderr, " Finished.\n");
 
-    sprintf(output, "./output/round12.bmp");
-    image_gray(OutputPlane[0]);
-    bmp_save(OutputPlane[0], output);
+    fprintf(stderr, "Save output image ...");
 
     image_convert(image, IMG_MODEL_BGR);
     bmp_save(image, "out.bmp");
+
+    fprintf(stderr, " Finished.\a\n");
 
     return 0;
 }
