@@ -215,7 +215,7 @@ cl_device_id select_device(void)
     } 
 
     /* Access a device */
-#ifdef USE_GPU
+#ifdef GPU
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
 #else
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
@@ -232,7 +232,7 @@ cl_device_id select_device(void)
 
     /* Print device info */
     clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(buf), buf ,NULL);
-    printf("\r\033[KDevice: %s ", buf);
+    printf("\r\033[KDevice %s ", buf);
     clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(buf), buf ,NULL);
     printf("%s selected\n", buf);
     return device;
@@ -335,14 +335,13 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     image_t        *conved;
 
 
-    cl_command_queue queue;
+    static cl_command_queue queue;
 
     size_t  border_size;
     size_t  offset[2];
     size_t  work_size[2];
     int32_t dx;
     int32_t dy;
-
 
     dx = kern->width / 2;
     dy = kern->height / 2;
@@ -361,8 +360,12 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     if (!opencl_inited) {
         device  = select_device();
         context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
-
-    program = load_program(context, device);
+        program = load_program(context, device);
+        queue = clCreateCommandQueue(context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+        if(err < 0) {
+            perror("Couldn't create a out of order queue");
+            queue = clCreateCommandQueue(context, device, 0, &err);  
+        }
         opencl_inited = 1;
     }
 
@@ -373,25 +376,21 @@ image_t * opencl_conv(image_t * src, image_t * kern)
         exit(-1);   
     }
 
-#ifdef USE_GPU
+#ifdef GPU
     src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
     kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
-    out_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
+    out_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
 #else
     src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
     kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
-    out_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
+    out_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
 #endif
     if(err < 0) {
         perror("Couldn't create a buffer");
         exit(-1);   
     }
 
-    queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
-    if(err < 0) {
-        perror("Couldn't create a command queue");
-        exit(1);   
-    }
+
 
     err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &src_buf);
     err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &kern_buf);
@@ -424,7 +423,6 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     clReleaseMemObject(src_buf);
     clReleaseMemObject(kern_buf);
     clReleaseMemObject(out_buf);
-    clReleaseCommandQueue(queue);
 
     return conved;
 }
