@@ -25,6 +25,7 @@ SOFTWARE.
 #include "image_resize.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 void img_std(image_t * img, int channel)
 {   
@@ -32,7 +33,7 @@ void img_std(image_t * img, int channel)
     float *endp;
 
     ip = img->data;
-    endp = &ip[3 * img->width * img->height];
+    endp = &ip[3 * img->width * img->height - 1];
 
     ip = &ip[channel];
     while (ip < endp) {
@@ -52,7 +53,7 @@ void img_std2(image_t * img, int channel, float max)
     k = max / ori_max;
 
     ip = img->data;
-    endp = &ip[3 * img->width * img->height];
+    endp = &ip[3 * img->width * img->height - 1];
 
     ip = &ip[channel];
     while (ip < endp) {
@@ -68,7 +69,7 @@ void img_ch_past(image_t * dst, image_t * src, int ch)
     float *endp;
 
     ip = src->data;
-    endp = &ip[3 * src->width * src->height];
+    endp = &ip[3 * src->width * src->height - 3];
     op = dst->data;
 
     ip = &ip[ch];
@@ -80,13 +81,12 @@ void img_ch_past(image_t * dst, image_t * src, int ch)
     }
 }
 
-int main(void)
+int main(int argc, const char ** argv)
 {
     image_t * image     = NULL;
     image_t * image2x   = NULL;
     image_t * kernel    = NULL;
     image_t ** InputPlane;
-    image_t ** InnerPlane;
     image_t ** OutputPlane;
 
     char filter[32];
@@ -99,14 +99,22 @@ int main(void)
 
     InputPlane  = malloc(128 * sizeof(image_t*));
     OutputPlane = malloc(128 * sizeof(image_t*));
-    InnerPlane  = malloc(128 * sizeof(image_t*));
 
-    image = bmp_load("test.bmp");
+    if (argc <= 1) {
+        image = bmp_load("test.bmp");
+    } else {
+        image = bmp_load(argv[1]);
+    }
     image2x = img_2x_bicubic(image);
+
+    image_free(image);
 
     max = image_max(image2x, 0);
 
     image = image_make_border(image2x, 3);
+
+    image_free(image2x);
+
     InputPlane[0] = image;
 
     image_convert(InputPlane[0], IMG_MODEL_YCBCR);
@@ -122,6 +130,7 @@ int main(void)
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[0], kernel);
         image_free(kernel);
+        fprintf(stderr, "Finished");
     }
 
     for (i = 0; i < 32; i++) {
@@ -140,13 +149,11 @@ int main(void)
             
             sprintf(filter, "./filters/filter-2-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
+            opencl_conv_and_merge(InputPlane[j], kernel);
+            image_free(kernel);
         }
-        OutputPlane[i] = image_merge(InnerPlane, 32, IMG_MERGE_ADD);
+        OutputPlane[i] = opencl_get_conv_data();
         img_std(OutputPlane[i], 0);
-        for (j = 0; j < 32; j++) {
-            image_free(InnerPlane[j]);
-        }
     }
 
     for (i = 0; i < 32; i++) {
@@ -165,6 +172,7 @@ int main(void)
         sprintf(filter, "./filters/filter-3-%02d", i);
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
     for (i = 0; i < 32; i++) {
@@ -184,13 +192,11 @@ int main(void)
             
             sprintf(filter, "./filters/filter-4-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
+            opencl_conv_and_merge(InputPlane[j], kernel);
+            image_free(kernel);
         }
-        OutputPlane[i] = image_merge(InnerPlane, 32, IMG_MERGE_ADD);
+        OutputPlane[i] = opencl_get_conv_data();
         img_std(OutputPlane[i], 0);
-        for (j = 0; j < 32; j++) {
-            image_free(InnerPlane[j]);
-        }
     }
 
     for (i = 0; i < 32; i++) {
@@ -212,6 +218,7 @@ int main(void)
         sprintf(filter, "./filters/filter-5-%02d", i);
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
     for (i = 0; i < 64; i++) {
@@ -231,13 +238,11 @@ int main(void)
             
             sprintf(filter, "./filters/filter-6-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
+            opencl_conv_and_merge(InputPlane[j], kernel);
+            image_free(kernel);
         }
-        OutputPlane[i] = image_merge(InnerPlane, 64, IMG_MERGE_ADD);
+        OutputPlane[i] = opencl_get_conv_data();
         img_std(OutputPlane[i], 0);
-        for (j = 0; j < 64; j++) {
-            image_free(InnerPlane[j]);
-        }
     }
 
     for (i = 0; i < 64; i++) {
@@ -259,6 +264,7 @@ int main(void)
         sprintf(filter, "./filters/filter-7-%02d", i);
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
     for (i = 0; i < 64; i++) {
@@ -278,13 +284,11 @@ int main(void)
             
             sprintf(filter, "./filters/filter-8-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
+            opencl_conv_and_merge(InputPlane[j], kernel);
+            image_free(kernel);
         }
-        OutputPlane[i] = image_merge(InnerPlane, 64, IMG_MERGE_ADD);
+        OutputPlane[i] = opencl_get_conv_data();
         img_std(OutputPlane[i], 0);
-        for (j = 0; j < 64; j++) {
-            image_free(InnerPlane[j]);
-        }
     }
 
     for (i = 0; i < 64; i++) {
@@ -306,6 +310,7 @@ int main(void)
         sprintf(filter, "./filters/filter-9-%02d", i);
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
     for (i = 0; i < 128; i++) {
@@ -325,13 +330,11 @@ int main(void)
             
             sprintf(filter, "./filters/filter-10-%02d-%02d", i, j);
             kernel = kernel_load(filter);
-            InnerPlane[j] = opencl_conv(InputPlane[j], kernel);
+            opencl_conv_and_merge(InputPlane[j], kernel);
+            image_free(kernel);
         }
-        OutputPlane[i] = image_merge(InnerPlane, 128, IMG_MERGE_ADD);
+        OutputPlane[i] = opencl_get_conv_data();
         img_std(OutputPlane[i], 0);
-        for (j = 0; j < 128; j++) {
-            image_free(InnerPlane[j]);
-        }
     }
 
     for (i = 0; i < 128; i++) {
@@ -353,6 +356,7 @@ int main(void)
         sprintf(filter, "./filters/filter-11-%02d", i);
         kernel = kernel_load(filter);
         OutputPlane[i] = opencl_conv(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
     for (i = 0; i < 128; i++) {
@@ -370,31 +374,31 @@ int main(void)
         fprintf(stderr, "\rRuning CNN Round 12 Output Plane %02d  ", i);
         sprintf(filter, "./filters/filter-12-%02d", i);
         kernel = kernel_load(filter);
-        InnerPlane[i] = opencl_conv(InputPlane[i], kernel);
+        opencl_conv_and_merge(InputPlane[i], kernel);
+        image_free(kernel);
     }
 
+    OutputPlane[0] = opencl_get_conv_data();
+
     fprintf(stderr, "\r\033[KCNN Round 12 Finished.\n");
-
-    fprintf(stderr, "Merge ...");
-
-    OutputPlane[0] = image_merge(InnerPlane, 128, IMG_MERGE_ADD);
-
-    fprintf(stderr, " Finished.\n");
 
     fprintf(stderr, "Rejust ...");
 
     img_std(OutputPlane[0], 0);
     img_std2(OutputPlane[0], 0, max);
+
+    /* SIGSEGV */
     img_ch_past(image, OutputPlane[0], 0);
 
     fprintf(stderr, " Finished.\n");
 
+    image_convert(image, IMG_MODEL_BGR);
+
     fprintf(stderr, "Save output image ...");
 
-    image_convert(image, IMG_MODEL_BGR);
     bmp_save(image, "out.bmp");
 
-    fprintf(stderr, " Finished.\a\n");
+    fprintf(stderr, "Finished.\a\n");
 
     return 0;
 }

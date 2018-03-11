@@ -27,5 +27,7 @@ image_t * image_conv(image_t * src, image_t * kernel);
 image_t * image_conv_raw(image_t * src, image_t * kernel);
 image_t * kernel_load(const char * file_name);
 image_t * opencl_conv(image_t * src, image_t * kern);
+int opencl_conv_and_merge(image_t * src, image_t * kern);
+image_t * opencl_get_conv_data(void);
 
 #endif /* CONV_H */

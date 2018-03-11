@@ -22,6 +22,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 image_t * image_new(int32_t width, int32_t height, uint8_t model)
 {
@@ -53,6 +54,8 @@ image_t * image_new(int32_t width, int32_t height, uint8_t model)
 
         img->data = malloc(img->width * img->height * img->pixel_size);
         if (img->data == NULL) break;
+
+        memset(img->data, 0, img->width * img->height * img->pixel_size);
 
         return img;
 
@@ -104,7 +107,7 @@ int bgr_to_ycbcr(image_t * img)
 
     img->model = IMG_MODEL_YCBCR;
 
-    fprintf(stderr, "Image was converted from BGR to YCbCr\n");
+    fprintf(stderr, "\rImage was converted from BGR to YCbCr\n");
 
     return 0;
 }
@@ -142,7 +145,7 @@ int ycbcr_to_bgr(image_t * img)
 
     img->model = IMG_MODEL_BGR;
 
-    fprintf(stderr, "Image was converted from YCbCr to BGR\n");
+    fprintf(stderr, "\rImage was converted from YCbCr to BGR\n");
 
     return 0;
 }

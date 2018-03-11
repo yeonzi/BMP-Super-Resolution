@@ -215,7 +215,7 @@ cl_device_id select_device(void)
     } 
 
     /* Access a device */
-#ifdef GPU
+#ifdef USE_GPU
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
 #else
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
@@ -318,24 +318,30 @@ cl_program load_program(cl_context context, cl_device_id devices) {
     return program;
 }
 
+int     out_buf_inited = 0;
+cl_mem  out_buf;
+image_t *conved;
+cl_command_queue queue;
+cl_device_id  device;
+int             opencl_inited;
+cl_context      context;
+cl_program      program;
+
 image_t * opencl_conv(image_t * src, image_t * kern)
 {
-    static cl_device_id  device;
+    extern cl_device_id  device;
     extern char         *program_binary;
     extern size_t        binary_size;
-    static int           opencl_inited;
-
-    static cl_int          err;
-    static cl_context      context;
-    static cl_program      program;
+    cl_int          err;
     cl_kernel       kernel;
     cl_mem          src_buf;
     cl_mem          kern_buf;
     cl_mem          out_buf;
     image_t        *conved;
-
-
-    static cl_command_queue queue;
+    extern int             opencl_inited;
+    extern cl_context      context;
+    extern cl_program      program;
+    extern cl_command_queue queue;
 
     size_t  border_size;
     size_t  offset[2];
@@ -349,6 +355,7 @@ image_t * opencl_conv(image_t * src, image_t * kern)
     border_size = kern->width>kern->height?kern->width:kern->height;
 
     image_convert(src, kern->model);
+
     conved = image_new(src->width, src->height, kern->model);
 
     offset[0] = 0;
@@ -369,17 +376,16 @@ image_t * opencl_conv(image_t * src, image_t * kern)
         opencl_inited = 1;
     }
 
-
     kernel  = clCreateKernel(program, "conv", &err);
     if(err < 0) {
         perror("Couldn't create a buffer 370");
         exit(-1);   
     }
-
-#ifdef GPU
-    src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
-    kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
-    out_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
+    
+#ifdef USE_GPU
+    src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
+    kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
+    out_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), conved->data, &err);
 #else
     src_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
     kern_buf  = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
@@ -390,7 +396,117 @@ image_t * opencl_conv(image_t * src, image_t * kern)
         exit(-1);   
     }
 
+    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &src_buf);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &kern_buf);
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &out_buf);
+    err |= clSetKernelArg(kernel, 3, sizeof(int), &src->width);
+    err |= clSetKernelArg(kernel, 4, sizeof(int), &kern->width);
+    err |= clSetKernelArg(kernel, 5, sizeof(int), &kern->height);
+    err |= clSetKernelArg(kernel, 6, sizeof(int), &dx);
+    err |= clSetKernelArg(kernel, 7, sizeof(int), &dy);
+    err |= clSetKernelArg(kernel, 8, sizeof(float), &kern->bias);
+    err |= clSetKernelArg(kernel, 9, sizeof(float), &kern->div);
+    if(err < 0) {
+        perror("Couldn't create a kernel argument");
+        exit(1);
+    }
 
+    err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, work_size, NULL, 0, NULL, NULL);
+    if(err < 0) {
+        perror("Couldn't enqueue the kernel");
+        exit(1);
+    }
+    err = clEnqueueReadBuffer(queue, out_buf, CL_TRUE, 0, 3 * conved->width * conved->height * sizeof(float), conved->data, 0, NULL, NULL); 
+    if(err < 0) {
+        perror("Couldn't read the buffer");
+        exit(1);
+    }
+
+    clReleaseKernel(kernel);
+    clReleaseMemObject(src_buf);
+    clReleaseMemObject(kern_buf);
+    clReleaseMemObject(out_buf);
+
+    return conved;
+}
+
+
+int opencl_conv_and_merge(image_t * src, image_t * kern)
+{
+    extern cl_device_id  device;
+    extern char         *program_binary;
+    extern size_t        binary_size;
+    extern int           opencl_inited;
+
+    cl_int      err;
+    extern cl_context  context;
+    extern cl_program  program;
+
+    cl_kernel       kernel;
+    cl_mem          src_buf;
+    cl_mem          kern_buf;
+    extern int     out_buf_inited;
+    extern cl_mem  out_buf;
+    extern image_t *conved;
+
+
+    extern cl_command_queue queue;
+
+    size_t  border_size;
+    size_t  offset[2];
+    size_t  work_size[2];
+    int32_t dx;
+    int32_t dy;
+
+    dx = kern->width / 2;
+    dy = kern->height / 2;
+
+    border_size = kern->width>kern->height?kern->width:kern->height;
+
+    image_convert(src, kern->model);
+
+    offset[0] = 0;
+    offset[1] = 0;
+
+    work_size[0] = src->width - kern->width;
+    work_size[1] = src->height - kern->height;
+
+    if (!opencl_inited) {
+        device  = select_device();
+        context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+        program = load_program(context, device);
+        queue = clCreateCommandQueue(context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+        if(err < 0) {
+            perror("Couldn't create a out of order queue");
+            queue = clCreateCommandQueue(context, device, 0, &err);  
+        }
+        opencl_inited = 1;
+    }
+
+
+    kernel  = clCreateKernel(program, "merge_conv", &err);
+    if(err < 0) {
+        perror("Couldn't create a buffer 370");
+        exit(-1);   
+    }
+
+#ifdef USE_GPU
+    src_buf   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
+    kern_buf  = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
+#else
+    src_buf   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, 3 * src->width * src->height * sizeof(float), src->data, &err);
+    kern_buf  = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, 3 * kern->width * kern->height * sizeof(float), kern->data, &err);
+#endif
+    if(err < 0) {
+        perror("Couldn't create a buffer");
+        exit(-1);   
+    }
+
+    if (!out_buf_inited) {
+        conved    = image_new(src->width, src->height, kern->model);
+        out_buf   = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 3 * conved->width * conved->height * sizeof(float), conved->data, &err);
+        out_buf_inited = 1;
+    }
 
     err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &src_buf);
     err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &kern_buf);
@@ -413,16 +529,32 @@ image_t * opencl_conv(image_t * src, image_t * kern)
         exit(1);
     }
 
+    clFinish(queue);
+
+    clReleaseKernel(kernel);
+    clReleaseMemObject(src_buf);
+    clReleaseMemObject(kern_buf);
+
+    return 0;
+}
+
+image_t * opencl_get_conv_data(void)
+{
+    extern int     out_buf_inited;
+    extern cl_mem  out_buf;
+    extern image_t *conved;
+    extern cl_command_queue queue;
+    cl_int      err;
+
     err = clEnqueueReadBuffer(queue, out_buf, CL_TRUE, 0, 3 * conved->width * conved->height * sizeof(float), conved->data, 0, NULL, NULL); 
     if(err < 0) {
         perror("Couldn't read the buffer");
         exit(1);
     }
 
-    clReleaseKernel(kernel);
-    clReleaseMemObject(src_buf);
-    clReleaseMemObject(kern_buf);
     clReleaseMemObject(out_buf);
+    out_buf_inited = 0;
 
     return conved;
 }
+
