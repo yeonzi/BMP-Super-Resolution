@@ -1,0 +1,13 @@
+stages:
+  - github-mirror
+
+github-push:
+  stage: github-mirror
+  script:
+    - git push git@github.com:yeonzi/BMP-Super-Resolution.git --all --force
+  tags:
+    - deploy
+    - github
+    - git
+  allow_failure: true
+  
