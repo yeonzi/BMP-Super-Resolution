@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+#
+######################################################################
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#                    Version 2, December 2004
+#
+# Copyright (C) 2018 Yeonji <yeonji@ieee.org>
+#
+# Everyone is permitted to copy and distribute verbatim or modified
+# copies of this license document, and changing it is allowed as long
+# as the name is changed.
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+#
+#  0. You just DO WHAT THE FUCK YOU WANT TO.
+#
+######################################################################
+
+#
+# Usage: pixiv_illust_get [illust id]
+#
+
+# Common Vars
+
+# Pixiv will check UA to block some client
+USER_AGENT='Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; 360se)'
+CURL='curl --silent -H "User-Agent: '${USER_AGENT}'" '
+
+# Base URL for generate Illust URL by illust id
+ILLUST_URL='https://www.pixiv.net/member_illust.php'
+ILLUST_BASE_URL=${ILLUST_URL}'?mode=medium\&illust_id='
+ILLUST_MANGA_BASE_URL=${ILLUST_URL}'?mode=manga\&illust_id='
+
+ILLUST_IMG_BASE_URL='https://i.pximg.net/img-original/img/'
+
+# Padding if manga mode by this string
+# manga mode will contain more illust
+MANGA_PADDING='mode=manga'
+
+
+ILLUST_ID=$1
+
+# generate URL
+ILLUST_URL=${ILLUST_BASE_URL}${ILLUST_ID}
+ILLUST_MANGA_URL=${ILLUST_MANGA_BASE_URL}${ILLUST_ID}
+
+# generate command for get illust page
+ILLUST_PAGE_CMD=${CURL}${ILLUST_URL}
+ILLUST_MANGA_CMD=${CURL}${ILLUST_MANGA_URL}
+
+# pre global var for image to download
+ILLUST_IMG_LIST=''
+ILLUST_REFERER=''
+
+
+echo "Fetching Illust List ..."
+ILLUST_PAGE=`eval "${ILLUST_PAGE_CMD}"`
+
+if [[ ${ILLUST_PAGE} =~ "${MANGA_PADDING}" ]]; then
+
+    # is manga mode
+
+    # get manga page for full list
+    ILLUST_PAGE=`eval "${ILLUST_MANGA_CMD}"`
+
+
+    #
+    # Get Illust List by this command
+    #
+    # Variable ${ILLUST_PAGE} should store a HTML page of Illust list.
+    # This page is zipped so there are no newline for each tag.
+    #
+    # First try to append new line for each tag by command:
+    #   sed s/\>\</\>\\$'\n'\</g
+    #
+    # Then Find out all tag with links by key word 'src', and find all
+    # links with img-master string. These was done by command:
+    #   grep src | grep img-master
+    #
+    # Remain should be an a-tag list, src should be the 6th item.
+    # Use awk to select src part and get which in quotes.
+    #   awk '{ print $6 }' | awk -F '"' '{ print $2 }'
+    #
+    # These was all done by analyse manga HTML page manualy.
+    #
+    ILLUST_IMG_LIST=$( echo ${ILLUST_PAGE} |\
+    sed s/\>\</\>\\$'\n'\</g |\
+    grep src | grep img-master |\
+    awk '{ print $6 }' | awk -F '"' '{ print $2 }' )
+
+    ILLUST_REFERER=${ILLUST_MANGA_URL}
+
+else
+
+    # not manga
+
+    #
+    # Get Illust URL by this command
+    #
+    # Variable ${ILLUST_PAGE} should store a HTML page of Illust.
+    # This page is zipped so there are no newline for each tag.
+    #
+    # First try to append new line for each tag by command:
+    #   sed s/\>\</\>\\$'\n'\</g
+    #
+    # Then Find out all tag with links by key word '<img', find links
+    # with illust id and _master string. These was done by command:
+    #   grep \<img | grep ${ILLUST_ID} | grep _master
+    #
+    # Remain should be an tag list, image path should be the 2th item.
+    # Use awk to select this part and get which in quotes.
+    #   awk '{ print $2 }' | awk -F '"' '{ print $2 }'
+    #
+    # As this link is not original link, try to get original link by
+    # awk and sed (the last three piped command)
+    #
+    # These was all done by analyse HTML page manualy.
+    #
+    ILLUST_IMG_LIST=$(echo ${ILLUST_PAGE} |\
+    sed s/\>\</\>\\$'\n'\</g |\
+    grep \<img | grep ${ILLUST_ID} | grep _master |\
+    awk '{ print $2 }' | awk -F '"' '{ print $2 }' |\
+    awk -F '/img/' '{ print $2 }' |\
+    sed 's/_master1200.jpg/.png/g' |\
+    sed 's/^/https:\/\/i.pximg.net\/img-original\/img\//g' )
+
+    ILLUST_REFERER=${ILLUST_URL}
+
+fi
+
+# the var ${ILLUST_IMG_LIST} should contain the rigth illust url list.
+# check it by un comment the following line.
+
+# echo ${ILLUST_IMG_LIST}
+
+while read -r ILLUST_IMG_URL; do
+    # for each url in list:
+
+    # sleep 10s to avoid IP block of Pixiv
+    sleep 10
+
+    # Generate download command.
+    DOWNLOAD_CMD=${CURL}' -H "Referer: '${ILLUST_URL}'" -O '${ILLUST_IMG_URL}
+
+    # Check download command by uncommit the following line.
+    # echo ${DOWNLOAD_CMD}
+
+    # eval download command.
+    echo "Fetching " ${ILLUST_IMG_URL}
+    eval "${DOWNLOAD_CMD}"
+
+done <<< "${ILLUST_IMG_LIST}" # read from variable (important)
