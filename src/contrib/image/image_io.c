@@ -33,6 +33,7 @@ image_t * image_open(const char * path)
     char * file_buffer = NULL;
     int    block_cnt;
     short  magic;
+    image_t * img = NULL;
 
     stat(path, &statbuf);
     file_size = statbuf.st_size;
@@ -51,24 +52,29 @@ image_t * image_open(const char * path)
     }
 
     block_cnt = fread(file_buffer, 1, file_size, file_p);
+    fclose(file_p);
     if (block_cnt == 0) {
         perror("Cannot read file.");
         free(file_buffer);
-        fclose(file_p);
         return NULL;
     }
 
     magic = *((short*)file_buffer);
     switch ( magic ) {
         case IMG_FMT_WINBMP:
-            return bmp_parse(file_buffer, file_size);
+            img = bmp_parse(file_buffer, file_size);
+            break;
         case IMG_FMT_ASCIIPPM:
-            return ppm_parse(file_buffer, file_size);
+            img = ppm_parse(file_buffer, file_size);
+            break;
         default:
             fprintf(stderr, "Unknown Type.\n");
             break;
     }
-    return NULL;
+
+    free(file_buffer);
+
+    return img;
 }
 
 int image_save(image_t * img, const char * path, short fmt)
