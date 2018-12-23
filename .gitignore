@@ -52,3 +52,9 @@ Mkfile.old
 dkms.conf
 
 *.json
+
+# Image files
+*.bmp
+*.ppm
+*.jpg
+*.png
