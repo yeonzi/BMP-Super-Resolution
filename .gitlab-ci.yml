@@ -4,7 +4,9 @@ stages:
 github-push:
   stage: github-mirror
   script:
-    - git push git@github.com:yeonzi/BMP-Super-Resolution.git --all --force
+    - git pull origin develop
+    - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
+    - git push github develop --force
   tags:
     - deploy
     - github
