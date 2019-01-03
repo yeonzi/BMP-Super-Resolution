@@ -18,12 +18,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef _ISR_PPM_H_
-#define _ISR_PPM_H_ 1
+#ifndef YISR_IMAGE_2X_H
+#define YISR_IMAGE_2X_H 1
 
-#include "image.h"
+#include <contrib/image/image.h>
 
-image_t * ppm_parse(char * ppm_file, size_t fsize);
-char    * ppm_pack(image_t * image, size_t *fsize, short fmt);
+#define INTERP_NONE     0
+#define INTERP_BASIC    1
+#define INTERP_BILINER  2
+#define INTERP_BICUBIC  3
+
+image_t * image_2x(image_t * src, int interp);
 
 #endif

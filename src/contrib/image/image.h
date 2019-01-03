@@ -66,7 +66,8 @@ image_t * image_new(int32_t width, int32_t height, int32_t model);
 void      image_free(image_t * img);
 
 /* Pixel APIs */
-uint8_t * image_pixel(image_t * img, int32_t x, int32_t y);
+typedef uint8_t* image_pixel_t;
+image_pixel_t image_pixel(image_t * img, int32_t x, int32_t y);
 
 /* Image File IO apis */
 image_t * image_open(const char * path);

@@ -18,52 +18,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#include <contrib/image/image.h>
-#include <stdlib.h>
+#include <core/image_2x.h>
 #include <stdio.h>
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-double image_precision(image_t * img1, image_t * img2)
-{
-	int width;
-	int height;
-
-	int x,y;
-	int diff;
-
-	long pixel_cnt;
-	long total_square;
-	double ave_error;
-
-	if ( (img1->width != img2->width) || (img1->height != img2->height) ) {
-		fprintf(stderr, "Image Size error, result may be error.");
-	}
-
-	width  = MIN(img1->width,  img2->width);
-	height = MIN(img1->height, img2->height);
-
-	pixel_cnt = width * height * 3;
-	total_square = 0;
-
-	for (x = 0; x < width; x++) {
-		for (y = 0; y < height; y++) {
-			diff = image_pixel(img1, x, y)[IMG_CHANNEL_B] - \
-					image_pixel(img2, x, y)[IMG_CHANNEL_B];
-			total_square += (diff * diff);
-			diff = image_pixel(img1, x, y)[IMG_CHANNEL_G] - \
-					image_pixel(img2, x, y)[IMG_CHANNEL_G];
-			total_square += (diff * diff);
-			diff = image_pixel(img1, x, y)[IMG_CHANNEL_R] - \
-					image_pixel(img2, x, y)[IMG_CHANNEL_R];
-			total_square += (diff * diff);
-		}
-	}
-
-	ave_error = (double)total_square / (double) pixel_cnt;
-
-	return ave_error;
-}
 
 int main(int argc, char const *argv[])
 {
@@ -76,14 +32,13 @@ int main(int argc, char const *argv[])
 	}
 
 	img1 = image_open(argv[1]);
-	img2 = image_open(argv[2]);
 
-	if (img1 == NULL || img2 == NULL) {
+	if (img1 == NULL) {
 		fprintf(stderr, "Cannot open file.\n");
 		return -1;
 	}
 
-	printf("%3.8f\n", image_precision(img1, img2));
+	img2 = image_2x(img1, INTERP_BASIC);
 
-	return 0;
+	return image_save(img2, argv[2], IMG_FMT_WINBMP);
 }

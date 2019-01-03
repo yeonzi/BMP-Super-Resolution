@@ -46,12 +46,12 @@ image_t * ppm_p3_parse(char * ppm_file, size_t fsize)
     char * read_p;
     char * read_endp;
 
-    int atoi_tmp;
+    int atoi_tmp = 0;
     int is_num = 0;
 
     int width = 0;
     int height = 0;
-    int depth;
+    int depth = 0;
 
     int x = 0;
     int y = 0;
@@ -96,6 +96,7 @@ image_t * ppm_p3_parse(char * ppm_file, size_t fsize)
                         perror("Not Standard PPM File. Stop.");
                         return NULL;
                     }
+                    fprintf(stderr, "Image Size: %d x %d\n", width, height);
                     img = image_new(width, height, IMG_MODEL_BGR);
                     if (img == NULL) {
                         return NULL;

@@ -89,5 +89,9 @@ int image_quarter(const char * input_file, const char * output_file)
 
 int main(int argc, char const *argv[])
 {
+	if (argc != 3) {
+		fprintf(stderr, "Usage: %s [input_file] [output_file]\n", argv[0]);
+		return -1;
+	}
 	return image_quarter(argv[1],argv[2]);
 }
