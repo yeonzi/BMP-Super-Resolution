@@ -18,16 +18,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef YISR_IMAGE_2X_H
-#define YISR_IMAGE_2X_H 1
+#include "image_utils.h"
+#include <stdlib.h>
 
-#include <contrib/image/image.h>
+image_t * image_make_border(image_t * img, int size)
+{
+	image_t * new_img;
+	image_pixel_t src,dst;
+	int x,y;
 
-#define INTERP_NONE     0
-#define INTERP_BASIC    1
-#define INTERP_BILINER  2
-#define INTERP_BICUBIC  3
+	new_img = image_new(img->width + 2*size, img->height + 2*size, img->model);
 
-image_t * image_2x(image_t * src, int interp);
+	if (new_img == NULL) {
+		return NULL;
+	}
 
-#endif
+
+    for (y = 0; y < img->height; y++) {
+		for (x = 0; x < img->width; x++) {
+			src = image_pixel(img, x, y);
+			dst = image_pixel(new_img, x + size, y + size);
+			dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+			dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+			dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+		}
+	}
+	return new_img;
+}
+
+image_t * image_chop_border(image_t * img, int size)
+{
+	image_t * new_img;
+	image_pixel_t src,dst;
+	int x,y;
+
+	new_img = image_new(img->width - 2*size, img->height - 2*size, img->model);
+
+	if (new_img == NULL) {
+		return NULL;
+	}
+
+    for (y = 0; y < new_img->height; y++) {
+		for (x = 0; x < new_img->width; x++) {
+			src = image_pixel(img, x + size, y + size);
+			dst = image_pixel(new_img, x, y);
+			dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+			dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+			dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+		}
+	}
+	return new_img;
+}

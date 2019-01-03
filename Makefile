@@ -29,7 +29,8 @@ bin/image_precision:obj/bmp.o obj/ppm.o obj/image_io.o obj/image.o \
 	${CC} ${CFLAGS} $^ -o $@
 
 bin/image_2x:obj/bmp.o obj/ppm.o obj/image_io.o obj/image.o \
-				obj/image_2x.o obj/isr_main.o
+				obj/image_2x.o obj/image_plane.o \
+				obj/image_border.o obj/isr_main.o
 	${CC} ${CFLAGS} $^ -o $@
 
 obj/bmp.o:src/contrib/image/bmp.c
@@ -48,6 +49,12 @@ obj/isr_main.o:src/core/main.c
 	${CC} -c ${CFLAGS} $< -o $@
 
 obj/image_2x.o:src/core/image_2x.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/image_border.o:src/core/image_border.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/image_plane.o:src/core/image_plane.c
 	${CC} -c ${CFLAGS} $< -o $@
 
 obj/image_quarter.o:src/utils/image_quarter.c

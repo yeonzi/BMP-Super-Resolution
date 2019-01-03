@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#include "image_2x.h"
+#include "image_utils.h"
 
 void image_2x_interp_basic(image_t * img)
 {
