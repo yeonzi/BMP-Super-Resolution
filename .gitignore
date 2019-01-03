@@ -58,3 +58,8 @@ dkms.conf
 *.ppm
 *.jpg
 *.png
+
+data/
+obj/
+bin/
+
