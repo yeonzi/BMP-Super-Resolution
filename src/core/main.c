@@ -18,10 +18,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#include <core/image_utils.h>
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <core/image_utils.h>
 #include <contrib/compute/opencl.h>
+#include <models/models.h>
 
 #define NEWLINE "\n"
 
@@ -32,7 +34,8 @@ const char * input_file = NULL;
 const char * output_file = NULL;
 const char * model_selected = NULL;
 const char   model_default[] = "basic";
-int          platform_id = 0;
+char * model_content;
+unsigned int device_id = 0;
 
 int main(int argc, char const *argv[])
 {
@@ -48,6 +51,8 @@ int main(int argc, char const *argv[])
     if (ret <= 0) {
         return ret;
     }
+
+    opencl_init(device_id);
 
 	img1 = image_open(input_file);
 
@@ -71,7 +76,7 @@ void show_usage(void) {
         "                        Netpbm ASCII Portable PixMap (.ppm)" NEWLINE
         "                        BGR-24 Bitmap Image File (.bmp)" NEWLINE
         "    -l              List all platform for caculate and exit." NEWLINE
-        "    -m <model>      Specific transform model. (not available now)" NEWLINE
+        "    -m <model>      Specific model file. (not available now)" NEWLINE
         "    -o <file_name>  Specific output file." NEWLINE
         "                    Supported format:" NEWLINE
         "                        BGR-24 Bitmap Image File (.bmp)" NEWLINE
@@ -138,10 +143,10 @@ int read_parameter(int argc, char const *argv[])
                     }
                 case 'p':
                     if (*p) {
-                        platform_id = atoi(p);
+                        device_id = atoi(p);
                         goto next;
                     }else if (argv[++i]) {
-                        platform_id = atoi(argv[i]);
+                        device_id = atoi(argv[i]);
                         goto next;
                     }else{
                         printf("option \"-p\" requires parameter\n");
@@ -171,6 +176,12 @@ int read_parameter(int argc, char const *argv[])
     }
     if ( model_selected == NULL ) {
         model_selected = model_default;
+    } else {
+        model_content = model_read(model_selected);
+        if (model_content == NULL) {
+            fprintf(stderr, "Cannot not model %s\n", model_selected);
+            return -1;
+        }
     }
 
     return 1;

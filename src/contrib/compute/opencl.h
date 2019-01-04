@@ -29,6 +29,6 @@ SOFTWARE.
 
 int opencl_available(void);
 int opencl_list(void);
-int opencl_init(int platform_id, int device_id);
+int opencl_init(unsigned int device_id);
 
 #endif

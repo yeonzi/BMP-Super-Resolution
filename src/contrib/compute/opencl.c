@@ -31,6 +31,17 @@ SOFTWARE.
 #define MAX_PLATFORMS 4
 #define MAX_DEVICES   8
 
+int opencl_available_status = 0;
+
+cl_platform_id platform_selected;
+cl_device_id   device_selected;
+
+int opencl_available(void)
+{
+    extern int opencl_available_status;
+    return opencl_available_status;
+}
+
 int opencl_list(void)
 {
     cl_int              err;
@@ -59,7 +70,7 @@ int opencl_list(void)
     }
 
     for (platform_index = 0; platform_index < platform_cnt; platform_index++) {
-    	err = clGetDeviceIDs( platforms[platform_index], \
+        err = clGetDeviceIDs( platforms[platform_index], \
                               CL_DEVICE_TYPE_ALL, 5, \
                               devices[platform_index], \
                               &device_cnt[platform_index] );
@@ -76,15 +87,78 @@ int opencl_list(void)
 
     for (platform_index = 0; platform_index < platform_cnt; platform_index++) {
         for (device_index = 0; device_index < device_cnt[platform_index]; device_index++) {
-        	cnt ++;
+            cnt ++;
             err = clGetDeviceInfo( devices[platform_index][device_index], \
-            			CL_DEVICE_VENDOR, sizeof(vendor), vendor ,NULL);
+                        CL_DEVICE_VENDOR, sizeof(vendor), vendor ,NULL);
             err = clGetDeviceInfo( devices[platform_index][device_index], \
-            			CL_DEVICE_NAME, sizeof(name), name ,NULL);
+                        CL_DEVICE_NAME, sizeof(name), name ,NULL);
             fprintf(stderr, "Device %d: %s %s (on OpenCL Platfrom %d)\n", \
-            	cnt, vendor, name, platform_index);
+                cnt, vendor, name, platform_index);
         }
     }
+
+    return 0;
+}
+
+int opencl_init(unsigned int device_id)
+{
+    cl_int              err;
+
+    cl_platform_id      platforms[MAX_PLATFORMS];
+    cl_uint             platform_cnt;
+    unsigned int        platform_index;
+
+    cl_device_id        devices[MAX_PLATFORMS][MAX_DEVICES];
+    cl_uint             device_cnt[MAX_PLATFORMS];
+
+    char vendor[100];
+    char name[100];
+
+    unsigned int cnt = 0;
+
+    extern int              opencl_available_status;
+    extern cl_platform_id   platform_selected;
+    extern cl_device_id     device_selected;
+
+    if (device_id == 0) {
+        fprintf(stderr, "Native code selected.\n");
+        return 0;
+    }
+
+    /* Identify a platform */
+    err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &platform_cnt);
+
+    if(platform_cnt <= 0) {
+        fprintf(stderr, "Invalid device id.\n");
+        fprintf(stderr, "Native code selected.\n");
+        return 0;
+    }
+
+    for (platform_index = 0; platform_index < platform_cnt; platform_index++) {
+        err = clGetDeviceIDs( platforms[platform_index], \
+                              CL_DEVICE_TYPE_ALL, 5, \
+                              devices[platform_index], \
+                              &device_cnt[platform_index] );
+
+        if ((cnt + device_cnt[platform_index]) >= device_id) {
+            platform_selected = platforms[platform_index];
+            device_selected   = devices[platform_index][device_id - cnt - 1];
+            opencl_available_status = 1;
+            break;
+        }
+
+        cnt += device_cnt[platform_index];
+    }
+
+    if (opencl_available_status != 1) {
+        fprintf(stderr, "Invalid device id.\n");
+        fprintf(stderr, "Native code selected.\n");
+        return 0;
+    }
+
+    err = clGetDeviceInfo(device_selected, CL_DEVICE_VENDOR, sizeof(vendor), vendor ,NULL);
+    err = clGetDeviceInfo(device_selected, CL_DEVICE_NAME, sizeof(name), name ,NULL);
+    fprintf(stderr, "Device %d: %s %s (OpenCL) Selected.\n", device_id, vendor, name);
 
     return 0;
 }
