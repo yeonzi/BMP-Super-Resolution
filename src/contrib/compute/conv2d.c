@@ -118,7 +118,6 @@ float * conv2d( float * input,  int in_w, int in_h, \
     cl_mem input_buf;
     cl_mem output_buf;
     cl_int err;
-    extern cl_command_queue    queue;
     if (opencl_available()) {
         cnt = in_w * in_h;
 
