@@ -23,49 +23,86 @@ SOFTWARE.
 
 image_t * image_make_border(image_t * img, int size)
 {
-	image_t * new_img;
-	image_pixel_t src,dst;
-	int x,y;
+    image_t * new_img;
+    image_pixel_t src,dst;
+    int x,y;
 
-	new_img = image_new(img->width + 2*size, img->height + 2*size, img->model);
+    new_img = image_new(img->width + 2*size, img->height + 2*size, img->model);
 
-	if (new_img == NULL) {
-		return NULL;
-	}
-
+    if (new_img == NULL) {
+        return NULL;
+    }
 
     for (y = 0; y < img->height; y++) {
-		for (x = 0; x < img->width; x++) {
-			src = image_pixel(img, x, y);
-			dst = image_pixel(new_img, x + size, y + size);
-			dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
-			dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
-			dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
-		}
-	}
-	return new_img;
+        for (x = 0; x < img->width; x++) {
+            /* Main part of image */
+            src = image_pixel(img, x, y);
+            dst = image_pixel(new_img, x + size, y + size);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+        }
+    }
+
+    for (y = 0; y < img->height; y++) {
+        for (x = 0; x < size; x++) {
+            /* Left Part */
+            src = image_pixel(img, 0, y);
+            dst = image_pixel(new_img, x, y + size);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+
+            /* Right Part */
+            src = image_pixel(img, img->width - 1, y);
+            dst = image_pixel(new_img, x + img->width + size, y + size);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+        }
+    }
+
+    for (y = 0; y < size; y++) {
+        for (x = 0; x < new_img->width; x++) {
+            /* Up Part */
+            src = image_pixel(new_img, x, size);
+            dst = image_pixel(new_img, x, y);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+
+            /* Down Part */
+            src = image_pixel(new_img, x, img->width + size - 1);
+            dst = image_pixel(new_img, x, y + img->width + size);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+        }
+    }
+
+    return new_img;
 }
 
 image_t * image_chop_border(image_t * img, int size)
 {
-	image_t * new_img;
-	image_pixel_t src,dst;
-	int x,y;
+    image_t * new_img;
+    image_pixel_t src,dst;
+    int x,y;
 
-	new_img = image_new(img->width - 2*size, img->height - 2*size, img->model);
+    new_img = image_new(img->width - 2*size, img->height - 2*size, img->model);
 
-	if (new_img == NULL) {
-		return NULL;
-	}
+    if (new_img == NULL) {
+        return NULL;
+    }
 
     for (y = 0; y < new_img->height; y++) {
-		for (x = 0; x < new_img->width; x++) {
-			src = image_pixel(img, x + size, y + size);
-			dst = image_pixel(new_img, x, y);
-			dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
-			dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
-			dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
-		}
-	}
-	return new_img;
+        for (x = 0; x < new_img->width; x++) {
+            src = image_pixel(img, x + size, y + size);
+            dst = image_pixel(new_img, x, y);
+            dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
+            dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
+            dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
+        }
+    }
+    return new_img;
 }
