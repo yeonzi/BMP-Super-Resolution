@@ -126,9 +126,7 @@ image_t * vgg7_yuv_convert(image_t * origin, const char * model)
 
     input_max = 0.0;
     for (img_index = 0; img_index < img_w * img_h; img_index ++) {
-        if (input_plane[img_index] > input_max) {
-            input_max += input_plane[img_index];
-        }
+        input_max += input_plane[img_index];
     }
 
 /******************************************************************************
@@ -337,9 +335,7 @@ Model File Format:
 
     output_max = 0.0;
     for (img_index = 0; img_index < img_w * img_h; img_index ++) {
-        if (output_plane[img_index] > output_max) {
-            output_max += output_plane[img_index];
-        }
+        output_max += output_plane[img_index];
     }
 
     zoom_factor = input_max / output_max;
