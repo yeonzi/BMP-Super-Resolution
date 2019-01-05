@@ -18,17 +18,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef YISR_OPENCL_H
-#define YISR_OPENCL_H 1
+#ifndef YISR_CNN_H
+#define YISR_CNN_H 1
 
-#ifdef __APPLE__    
-#include <OpenCL/cl.h>    
-#else    
-#include <CL/cl.h>    
-#endif
+int full_convolution_layer_opencl( \
+    cl_mem * input, cl_mem * output, float * filters, float * bias, \
+    int input_cnt, int output_cnt, int input_w, int input_h,        \
+    int filter_w, int filter_h, int dx, int dy );
+int full_leaky_relu_layer_opencl(cl_mem * buffer, float rate, int data_length, int plane_cnt);
 
-int opencl_available(void);
-int opencl_list(void);
-int opencl_init(unsigned int device_id);
 
 #endif

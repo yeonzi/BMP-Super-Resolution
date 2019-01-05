@@ -22,7 +22,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <core/image_utils.h>
-#include <contrib/compute/opencl.h>
+#include <contrib/compute/compute.h>
 #include <models/models.h>
 
 #define NEWLINE "\n"
@@ -33,16 +33,15 @@ int read_parameter(int argc, char const *argv[]);
 const char * input_file = NULL;
 const char * output_file = NULL;
 const char * model_selected = NULL;
-const char   model_default[] = "basic";
+const char   model_default[] = "./data/vgg7.data";
 char * model_content;
 unsigned int device_id = 0;
 
 int main(int argc, char const *argv[])
 {
 
-    image_t * img1;
-    image_t * img2;
-    image_t * img3;
+    image_t * input;
+    image_t * output;
 
     int ret;
 
@@ -54,17 +53,17 @@ int main(int argc, char const *argv[])
 
     opencl_init(device_id);
 
-	img1 = image_open(input_file);
+	input = image_open(input_file);
 
-	if (img1 == NULL) {
-		fprintf(stderr, "Cannot open file.\n");
+	if (input == NULL) {
+		fprintf(stderr, "Cannot open input file.\n");
 		return -1;
 	}
 
-	img2 = image_make_border(img1, 10);
-	img3 = image_chop_border(img2, 10);
+    vgg7_yuv_model_check(model_content);
+    output = vgg7_yuv_convert(input, model_content);
 
-	return image_save(img3, output_file, IMG_FMT_WINBMP);
+	return image_save(output, output_file, IMG_FMT_WINBMP);
 }
 
 void show_usage(void) {
@@ -176,12 +175,12 @@ int read_parameter(int argc, char const *argv[])
     }
     if ( model_selected == NULL ) {
         model_selected = model_default;
-    } else {
-        model_content = model_read(model_selected);
-        if (model_content == NULL) {
-            fprintf(stderr, "Cannot not model %s\n", model_selected);
-            return -1;
-        }
+    }
+    
+    model_content = model_read(model_selected);
+    if (model_content == NULL) {
+        fprintf(stderr, "Cannot not model %s\n", model_selected);
+        return -1;
     }
 
     return 1;

@@ -18,31 +18,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef YISR_MODEL_H
-#define YISR_MODEL_H 1
+#ifndef YISR_COMPUTE_H
+#define YISR_COMPUTE_H 1
 
-#include <stdint.h>
-#include <contrib/image/image.h>
+#ifdef __APPLE__    
+#include <OpenCL/cl.h>    
+#else    
+#include <CL/cl.h>    
+#endif
 
-char * model_read(const char *path);
+int opencl_available(void);
+int opencl_list(void);
+int opencl_init(unsigned int device_id);
 
-typedef struct {
-	int32_t model_file_magic;
-    int32_t model_file_size;
-    int32_t data_bias;
-    int32_t data_length;
-    int64_t model_magic;
-    int64_t model_ver;
-} model_header;
+float * conv2d( float * input,  int in_w, int in_h, \
+                float * kernel, int k_w,  int k_h,  \
+                float bias, int dx, int dy );
 
-typedef struct {
-    uint64_t    magic;
-    char       *name;
-    int       (*check)(const char*);
-    image_t*  (*run)(image_t*, const char*);
-} isr_model_t;
+float * relu(float * input, int length);
+float * leaky_relu(float * input, float rate, int length);
 
-int vgg7_yuv_model_check(const char * model);
-image_t * vgg7_yuv_convert(image_t * origin, const char * model);
+
 
 #endif

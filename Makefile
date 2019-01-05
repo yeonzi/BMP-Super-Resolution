@@ -1,9 +1,9 @@
 # Make File for Yeonji Image Super Resolution
 
 CC:=gcc
-CFLAGS:=-O2 -Wall -Wextra -Werror
+# CFLAGS:=-g -O2 -Wall -Wextra -Werror
 
-CFLAGS=-O2 -Wall -Wextra
+CFLAGS=-O2 -Wall -Wextra -ffunction-sections -fdata-sections
 LDFLAGS:=
 MKDIR:=mkdir -p
 
@@ -38,6 +38,10 @@ bin/image_2x:obj/bmp.o \
 				obj/models.o \
 				obj/vgg7yuv.o \
 				obj/opencl.o \
+				obj/conv2d.o \
+				obj/relu.o \
+				obj/cnn.o \
+				obj/clprogram.o \
 				obj/isr_main.o
 	${CC} ${CFLAGS} $^ -o $@ -framework OpenCL
 
@@ -73,6 +77,26 @@ obj/vgg7yuv.o:src/models/vgg7yuv.c
 
 obj/opencl.o:src/contrib/compute/opencl.c
 	${CC} -c ${CFLAGS} $< -o $@
+
+obj/conv2d.o:src/contrib/compute/conv2d.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/relu.o:src/contrib/compute/relu.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/cnn.o:src/contrib/compute/cnn.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/clprogram.o:obj/clprogram.c
+	${CC} -c ${CFLAGS} $< -o $@
+
+obj/clprogram.c:src/contrib/compute/clprogram.cl
+	@echo "#include <stdlib.h>" > obj/clprogram.c
+	xxd --include src/contrib/compute/clprogram.cl | \
+	sed 's/0x2a, 0x2f/0x2a, 0x2f, 0x0a, 0x00/g' | \
+	sed 's/src_contrib_compute_clprogram_cl/opencl_program_str/g' | \
+	sed 's/unsigned int/size_t/g' \
+	>> obj/clprogram.c
 
 obj/image_quarter.o:src/utils/image_quarter.c
 	${CC} -c ${CFLAGS} $< -o $@

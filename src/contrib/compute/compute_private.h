@@ -18,31 +18,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef YISR_MODEL_H
-#define YISR_MODEL_H 1
+#ifndef YISR_COMPUTE_PRIVATE_H
+#define YISR_COMPUTE_PRIVATE_H 1
 
-#include <stdint.h>
-#include <contrib/image/image.h>
+#include <contrib/compute/compute.h>
 
-char * model_read(const char *path);
+cl_kernel opencl_load_kernel(char * program_name, int * err);
 
-typedef struct {
-	int32_t model_file_magic;
-    int32_t model_file_size;
-    int32_t data_bias;
-    int32_t data_length;
-    int64_t model_magic;
-    int64_t model_ver;
-} model_header;
+int opencl_add_job(cl_kernel kernel, int dim, size_t* work_size);
 
-typedef struct {
-    uint64_t    magic;
-    char       *name;
-    int       (*check)(const char*);
-    image_t*  (*run)(image_t*, const char*);
-} isr_model_t;
+cl_mem opencl_create_rw_buffer(void * data, size_t size, int * err);
+cl_mem opencl_create_ro_buffer(void * data, size_t size, int * err);
 
-int vgg7_yuv_model_check(const char * model);
-image_t * vgg7_yuv_convert(image_t * origin, const char * model);
+int opencl_read_buffer(cl_mem buf, size_t size, void * data);
+
+void opencl_wait(void);
+
+float * conv2d_native( float * input,  int in_w, int in_h, \
+                       float * filter, int k_w,  int k_h,  \
+                       float bias, int dx, int dy );
+int conv2d_opencl( cl_mem  input, cl_mem output, int in_w, int in_h, \
+                    float * filter, int k_w, int k_h, int dx, int dy );
+
+float * relu_native(float * buffer, int length);
+int relu_opencl(cl_mem  buffer, int length);
+float * leaky_relu_native(float * buffer, float rate, int length);
+int leaky_relu_opencl(cl_mem  buffer, float rate, int length);
 
 #endif

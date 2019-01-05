@@ -29,9 +29,18 @@ SOFTWARE.
         R = (float)(image_pixel(img, x, y)[IMG_CHANNEL_R]); \
 
 #define apply_rgb_data(img,x,y) \
-        image_pixel(img, x, y)[IMG_CHANNEL_B] = lroundf(B); \
-        image_pixel(img, x, y)[IMG_CHANNEL_G] = lroundf(G); \
-        image_pixel(img, x, y)[IMG_CHANNEL_R] = lroundf(R); \
+        tmp = round(B); \
+        if (tmp > 255) { tmp = 255; }   \
+        if (tmp < 0) { tmp = 0; }       \
+        image_pixel(img, x, y)[IMG_CHANNEL_B] = tmp; \
+        tmp = round(G); \
+        if (tmp > 255) { tmp = 255; }   \
+        if (tmp < 0) { tmp = 0; }       \
+        image_pixel(img, x, y)[IMG_CHANNEL_G] = tmp; \
+        tmp = round(R); \
+        if (tmp > 255) { tmp = 255; }   \
+        if (tmp < 0) { tmp = 0; }       \
+        image_pixel(img, x, y)[IMG_CHANNEL_R] = tmp; \
 
 #define rgb_to_ycbcr() \
         Y  =       + (0.299    * R) + (0.587    * G) + (0.114    * B); \
@@ -114,27 +123,37 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
     float R,G,B,Y,Cb,Cr;
 
     int x,y;
+    int tmp;
 
     dump_p = data;
 
     if (plane == IMAGE_PLANE_B) {
         for (x = 0; x < img->width; x++) {
             for (y = 0; y < img->height; y++) {
-                image_pixel(img, x, y)[IMG_CHANNEL_B] = round(*dump_p);
+                tmp = round(*dump_p);
+                if (tmp > 255) { tmp = 255; }
+                if (tmp < 0) { tmp = 0; }
+                image_pixel(img, x, y)[IMG_CHANNEL_B] = tmp;
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_G) {
         for (x = 0; x < img->width; x++) {
             for (y = 0; y < img->height; y++) {
-                image_pixel(img, x, y)[IMG_CHANNEL_G] = round(*dump_p);
+                tmp = round(*dump_p);
+                if (tmp > 255) { tmp = 255; }
+                if (tmp < 0) { tmp = 0; }
+                image_pixel(img, x, y)[IMG_CHANNEL_G] = tmp;
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_R) {
         for (x = 0; x < img->width; x++) {
             for (y = 0; y < img->height; y++) {
-                image_pixel(img, x, y)[IMG_CHANNEL_R] = round(*dump_p);
+                tmp = round(*dump_p);
+                if (tmp > 255) { tmp = 255; }
+                if (tmp < 0) { tmp = 0; }
+                image_pixel(img, x, y)[IMG_CHANNEL_R] = tmp;
                 dump_p ++;
             }
         }
