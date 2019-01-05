@@ -130,8 +130,7 @@ int opencl_init(unsigned int device_id)
     extern cl_command_queue queue;
 
     char * program_ptr;
-    // char cl_compile_options[] = "-cl-mad-enable -cl-fast-relaxed-math";
-    char cl_compile_options[] = "-cl-mad-enable";
+    char cl_compile_options[] = "-cl-mad-enable -cl-fast-relaxed-math";
     char * compile_log;
     size_t log_size;
 
