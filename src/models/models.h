@@ -24,8 +24,6 @@ SOFTWARE.
 #include <stdint.h>
 #include <contrib/image/image.h>
 
-char * model_read(const char *path);
-
 typedef struct {
 	int32_t model_file_magic;
     int32_t model_file_size;
@@ -38,11 +36,11 @@ typedef struct {
 typedef struct {
     uint64_t    magic;
     char       *name;
-    int       (*check)(const char*);
-    image_t*  (*run)(image_t*, const char*);
+    int       (*check)(char*);
+    image_t*  (*run)(image_t*, char*);
 } isr_model_t;
 
-int vgg7_yuv_model_check(const char * model);
-image_t * vgg7_yuv_convert(image_t * origin, const char * model);
+char * model_read(const char *path);
+isr_model_t * model_detect(char * model);
 
 #endif

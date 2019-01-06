@@ -86,3 +86,25 @@ char * model_read(const char *path)
 
     return file_buffer;
 }
+
+isr_model_t * model_detect(char * model)
+{
+    int model_index;
+    int check_result;
+
+    model_index = 0;
+
+    while (isr_models[model_index] != NULL) {
+        check_result = isr_models[model_index]->check(model);
+
+        if (check_result == 0) {
+            fprintf(stderr, "Model: %s detected.\n", isr_models[model_index]->name);
+            return isr_models[model_index];
+        }
+
+        model_index ++;
+    }
+
+    fprintf(stderr, "No available code for this model file.\n");
+    return NULL;
+}

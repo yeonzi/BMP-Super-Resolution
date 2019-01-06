@@ -27,17 +27,18 @@ SOFTWARE.
 
 #define NEWLINE "\n"
 
-void show_usage(void);
-int read_parameter(int argc, char const *argv[]);
+unsigned int device_id = 0;
 
 const char * input_file = NULL;
 const char * output_file = NULL;
-const char * model_selected = NULL;
-const char   model_default[] = "./data/vgg7.data";
-char * model_content;
-unsigned int device_id = 0;
 
-int main(int argc, char const *argv[])
+char * model_content;
+isr_model_t * model;
+
+void show_usage(void);
+int read_parameter(int argc, char const *argv[]);
+
+int main(int argc, const char ** argv)
 {
 
     image_t * input;
@@ -60,8 +61,7 @@ int main(int argc, char const *argv[])
 		return -1;
 	}
 
-    vgg7_yuv_model_check(model_content);
-    output = vgg7_yuv_convert(input, model_content);
+    output = model->run(input, model_content);
 
 	return image_save(output, output_file, IMG_FMT_WINBMP);
 }
@@ -90,6 +90,8 @@ int read_parameter(int argc, char const *argv[])
 {
     const char * p;
     int         i;
+
+    const char * model_selected = NULL;
 
     for (i = 1; i < argc; i++) {
         p = argv[i];
@@ -174,12 +176,17 @@ int read_parameter(int argc, char const *argv[])
         return -1;
     }
     if ( model_selected == NULL ) {
-        model_selected = model_default;
+        model_selected = "./data/vgg7.data";
     }
     
     model_content = model_read(model_selected);
     if (model_content == NULL) {
-        fprintf(stderr, "Cannot not model %s\n", model_selected);
+        fprintf(stderr, "Cannot not load model %s\n", model_selected);
+        return -1;
+    }
+
+    model = model_detect(model_content);
+    if (model == NULL) {
         return -1;
     }
 

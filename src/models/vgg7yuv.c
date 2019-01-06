@@ -31,8 +31,8 @@ SOFTWARE.
 #define MODEL_VER 0x0000006168706C41
 
 char model_name[]="SRCNN_VGG7_Y";
-int vgg7_yuv_model_check(const char * model);
-image_t * vgg7_yuv_convert(image_t * origin, const char * model);
+int vgg7_yuv_model_check(char * model);
+image_t * vgg7_yuv_convert(image_t * origin, char * model);
 
 isr_model_t isr_model_vgg7yuv = {
     .magic = MODEL_MAGIC,
@@ -42,9 +42,9 @@ isr_model_t isr_model_vgg7yuv = {
 };
 
 
-int vgg7_yuv_model_check(const char * model)
+int vgg7_yuv_model_check(char * model)
 {
-    const model_header * header;
+    model_header * header;
 
     header = (model_header*)model;
 
@@ -63,9 +63,9 @@ int vgg7_yuv_model_check(const char * model)
     return 0;
 }
 
-image_t * vgg7_yuv_convert(image_t * origin, const char * model)
+image_t * vgg7_yuv_convert(image_t * origin, char * model)
 {
-    const model_header * header;
+    model_header * header;
 
     image_t * img;
     image_t * img_expand;
