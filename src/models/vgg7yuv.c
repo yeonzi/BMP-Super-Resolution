@@ -26,6 +26,7 @@ SOFTWARE.
 #include <models/models.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MODEL_MAGIC 0x0056555937474756
 #define MODEL_VER 0x0000006168706C41

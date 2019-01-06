@@ -21,6 +21,11 @@ SOFTWARE.
 #ifndef YISR_CNN_H
 #define YISR_CNN_H 1
 
+#include <stdint.h>
+
+#include <contrib/compute/compute.h>
+#include <contrib/compute/compute_private.h>
+
 int full_convolution_layer_opencl( \
     cl_mem * input, cl_mem * output, float * filters, float * bias, \
     int input_cnt, int output_cnt, int input_w, int input_h,        \

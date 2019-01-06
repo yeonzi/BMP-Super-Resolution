@@ -23,6 +23,7 @@ SOFTWARE.
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define MAX_PLATFORMS 4
 #define MAX_DEVICES   8
@@ -72,16 +73,16 @@ int opencl_list(void)
     }
 
     for (platform_index = 0; platform_index < platform_cnt; platform_index++) {
-        err = clGetDeviceIDs( platforms[platform_index], \
+        err |= clGetDeviceIDs( platforms[platform_index], \
                               CL_DEVICE_TYPE_ALL, 5, \
                               devices[platform_index], \
                               &device_cnt[platform_index] );
     }
 
     for (platform_index = 0; platform_index < platform_cnt; platform_index++) {
-        err = clGetPlatformInfo( platforms[platform_index], CL_PLATFORM_VENDOR,\
+        err |= clGetPlatformInfo( platforms[platform_index], CL_PLATFORM_VENDOR,\
             sizeof(vendor), vendor ,NULL);
-        err = clGetPlatformInfo( platforms[platform_index], CL_PLATFORM_NAME, \
+        err |= clGetPlatformInfo( platforms[platform_index], CL_PLATFORM_NAME, \
             sizeof(name), name ,NULL);
         fprintf(stderr, "Platform %d: %s %s (%d Devices)\n", platform_index, \
             vendor, name, device_cnt[platform_index]);
@@ -94,16 +95,16 @@ int opencl_list(void)
             device_index < device_cnt[platform_index]; \
             device_index++) {
             cnt ++;
-            err = clGetDeviceInfo( devices[platform_index][device_index], \
+            err |= clGetDeviceInfo( devices[platform_index][device_index], \
                         CL_DEVICE_VENDOR, sizeof(vendor), vendor ,NULL);
-            err = clGetDeviceInfo( devices[platform_index][device_index], \
+            err |= clGetDeviceInfo( devices[platform_index][device_index], \
                         CL_DEVICE_NAME, sizeof(name), name ,NULL);
             fprintf(stderr, "Device %d: %s %s (on OpenCL Platfrom %d)\n", \
                 cnt, vendor, name, platform_index);
         }
     }
 
-    return 0;
+    return err;
 }
 
 int opencl_init(unsigned int device_id)
@@ -119,6 +120,19 @@ int opencl_init(unsigned int device_id)
 
     char vendor[100];
     char name[100];
+
+#if defined (CL_VERSION_2_0)
+
+    cl_queue_properties prop_default[] = {  CL_QUEUE_PROPERTIES, \
+        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | \
+        CL_QUEUE_ON_DEVICE|CL_QUEUE_ON_DEVICE_DEFAULT, 0 };
+    cl_queue_properties prop_inorder[] = {  CL_QUEUE_PROPERTIES, \
+        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | \
+        CL_QUEUE_ON_DEVICE|CL_QUEUE_ON_DEVICE_DEFAULT, 0 };
+    cl_queue_properties prop_host[] = {  CL_QUEUE_PROPERTIES, \
+        CL_QUEUE_PROFILING_ENABLE, 0 };
+
+#endif
 
     unsigned int cnt = 0;
 
@@ -220,18 +234,62 @@ int opencl_init(unsigned int device_id)
         return 0;
     }
 
-    queue = clCreateCommandQueue(context, device_selected, \
-        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
-    if(err < 0) {
+    do {
+
+#if defined (CL_VERSION_2_0)
+
+        queue = clCreateCommandQueueWithProperties(context, \
+            device_selected, prop_default, &err);
+        
+        if (err == 0) {
+            break;
+        }
+
         fprintf(stderr, "Warning: Couldn't create a out of order command queue.\n");
         fprintf(stderr, "Info: Trying standard command queue.\n");
+        
+        queue = clCreateCommandQueueWithProperties(context, \
+            device_selected, prop_inorder, &err);
+
+        if (err == 0) {
+            break;
+        }
+
+        fprintf(stderr, "Warning: Couldn't create a in order command queue.\n");
+        fprintf(stderr, "Info: Trying host wide command queue.\n");
+        
+        queue = clCreateCommandQueueWithProperties(context, \
+            device_selected, prop_host, &err);
+
+        if (err < 0) {
+            fprintf(stderr, "Error: Couldn't create OpenCL command queue.\n");
+            opencl_available_status = 0;
+            return 0;
+        }
+
+#else /* Code for OpenCL 1.0 1.1 1.2 */
+
+        queue = clCreateCommandQueue(context, device_selected, \
+            CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+
+        if (err == 0) {
+            break;
+        }
+
+        fprintf(stderr, "Warning: Couldn't create a out of order command queue.\n");
+        fprintf(stderr, "Info: Trying standard command queue.\n");
+
         queue = clCreateCommandQueue(context, device_selected, 0, &err);
+
         if(err < 0) {
             fprintf(stderr, "Error: Couldn't create OpenCL command queue.\n");
             opencl_available_status = 0;
             return 0;
         }
-    }
+
+#endif
+
+    } while (0);
 
     fprintf(stderr, "Info: OpenCL Initialized on %s.\n", name);
 

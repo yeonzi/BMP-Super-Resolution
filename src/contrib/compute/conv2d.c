@@ -21,6 +21,7 @@ SOFTWARE.
 #include <contrib/compute/compute_private.h>
 #include <contrib/compute/compute.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 float * conv2d_native( float * input,  int in_w, int in_h, \
                        float * filter, int k_w,  int k_h,  \
