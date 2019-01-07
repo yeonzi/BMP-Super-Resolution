@@ -6,6 +6,10 @@ CC:=gcc
 CFLAGS=-O2 -mfma -Wall -Wextra -ffunction-sections -fdata-sections
 LDFLAGS:=
 MKDIR:=mkdir -p
+BUILD_DIR=build
+BIN_DIR=bin
+
+DIRS=bin build
 
 INCLUDE:=src
 CFLAGS+= -I${INCLUDE}
@@ -14,92 +18,95 @@ SRCDIR:=src
 
 all:bin/image_quarter bin/image_precision bin/image_2x
 
-.PHONY:clean
+.PHONY:clean dirs
+
+dirs:
+	${MKDIR} $(DIRS)
 
 clean:
-	@rm -rvf obj/*
+	@rm -rvf ${BUILD_DIR}/*
 	@rm -rvf bin/*
 
-bin/image_quarter:obj/bmp.o obj/ppm.o obj/image_io.o obj/image.o \
-					obj/image_quarter.o
+bin/image_quarter:${BUILD_DIR}/bmp.o ${BUILD_DIR}/ppm.o ${BUILD_DIR}/image_io.o ${BUILD_DIR}/image.o \
+					${BUILD_DIR}/image_quarter.o
 	${CC} ${CFLAGS} $^ -o $@
 
-bin/image_precision:obj/bmp.o obj/ppm.o obj/image_io.o obj/image.o \
-					obj/image_precision.o
+bin/image_precision:${BUILD_DIR}/bmp.o ${BUILD_DIR}/ppm.o ${BUILD_DIR}/image_io.o ${BUILD_DIR}/image.o \
+					${BUILD_DIR}/image_precision.o
 	${CC} ${CFLAGS} $^ -o $@
 
-bin/image_2x:obj/bmp.o \
-				obj/ppm.o \
-				obj/image_io.o \
-				obj/image.o \
-				obj/image_2x.o \
-				obj/image_plane.o \
-				obj/image_border.o \
-				obj/models.o \
-				obj/vgg7yuv.o \
-				obj/opencl.o \
-				obj/conv2d.o \
-				obj/relu.o \
-				obj/cnn.o \
-				obj/clprogram.o \
-				obj/isr_main.o
+bin/image_2x:${BUILD_DIR}/bmp.o \
+				${BUILD_DIR}/ppm.o \
+				${BUILD_DIR}/image_io.o \
+				${BUILD_DIR}/image.o \
+				${BUILD_DIR}/image_2x.o \
+				${BUILD_DIR}/image_plane.o \
+				${BUILD_DIR}/image_border.o \
+				${BUILD_DIR}/models.o \
+				${BUILD_DIR}/vgg7yuv.o \
+				${BUILD_DIR}/opencl.o \
+				${BUILD_DIR}/conv2d.o \
+				${BUILD_DIR}/relu.o \
+				${BUILD_DIR}/cnn.o \
+				${BUILD_DIR}/clprogram.o \
+				${BUILD_DIR}/isr_main.o
 	${CC} ${CFLAGS} $^ -o $@ -framework OpenCL
 
-obj/bmp.o:src/contrib/image/bmp.c
+${BUILD_DIR}/bmp.o:src/contrib/image/bmp.c
+	${CC} -c ${CFLAGS} $^ -o $@
+
+${BUILD_DIR}/ppm.o:src/contrib/image/ppm.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/ppm.o:src/contrib/image/ppm.c
+${BUILD_DIR}/image_io.o:src/contrib/image/image_io.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image_io.o:src/contrib/image/image_io.c
+${BUILD_DIR}/image.o:src/contrib/image/image.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image.o:src/contrib/image/image.c
+${BUILD_DIR}/isr_main.o:src/core/main.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/isr_main.o:src/core/main.c
+${BUILD_DIR}/image_2x.o:src/core/image_2x.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image_2x.o:src/core/image_2x.c
+${BUILD_DIR}/image_border.o:src/core/image_border.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image_border.o:src/core/image_border.c
+${BUILD_DIR}/image_plane.o:src/core/image_plane.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image_plane.o:src/core/image_plane.c
+${BUILD_DIR}/models.o:src/core/model.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/models.o:src/models/models.c
+${BUILD_DIR}/vgg7yuv.o:src/models/vgg7yuv.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/vgg7yuv.o:src/models/vgg7yuv.c
+${BUILD_DIR}/opencl.o:src/contrib/compute/opencl.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/opencl.o:src/contrib/compute/opencl.c
+${BUILD_DIR}/conv2d.o:src/contrib/compute/conv2d.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/conv2d.o:src/contrib/compute/conv2d.c
+${BUILD_DIR}/relu.o:src/contrib/compute/relu.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/relu.o:src/contrib/compute/relu.c
+${BUILD_DIR}/cnn.o:src/contrib/compute/cnn.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/cnn.o:src/contrib/compute/cnn.c
+${BUILD_DIR}/clprogram.o:${BUILD_DIR}/clprogram.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/clprogram.o:obj/clprogram.c
-	${CC} -c ${CFLAGS} $< -o $@
-
-obj/clprogram.c:src/contrib/compute/clprogram.cl
-	@echo "#include <stdlib.h>" > obj/clprogram.c
+${BUILD_DIR}/clprogram.c:src/contrib/compute/clprogram.cl
+	@echo "#include <stdlib.h>" > ${BUILD_DIR}/clprogram.c
 	xxd --include src/contrib/compute/clprogram.cl | \
 	sed 's/0x2a, 0x2f/0x2a, 0x2f, 0x0a, 0x00/g' | \
 	sed 's/src_contrib_compute_clprogram_cl/opencl_program_str/g' | \
 	sed 's/unsigned int/size_t/g' \
-	>> obj/clprogram.c
+	>> ${BUILD_DIR}/clprogram.c
 
-obj/image_quarter.o:src/utils/image_quarter.c
+${BUILD_DIR}/image_quarter.o:src/utils/image_quarter.c
 	${CC} -c ${CFLAGS} $< -o $@
 
-obj/image_precision.o:src/utils/image_precision.c
+${BUILD_DIR}/image_precision.o:src/utils/image_precision.c
 	${CC} -c ${CFLAGS} $< -o $@

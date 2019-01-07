@@ -22,7 +22,7 @@ SOFTWARE.
 #include <contrib/compute/compute.h>
 #include <contrib/compute/cnn.h>
 #include <core/image_utils.h>
-#include <models/models.h>
+#include <core/model.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

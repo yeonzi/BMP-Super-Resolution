@@ -23,7 +23,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <core/image_utils.h>
 #include <contrib/compute/compute.h>
-#include <models/models.h>
+#include <core/model.h>
 
 #define NEWLINE "\n"
 
