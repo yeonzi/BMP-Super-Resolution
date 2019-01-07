@@ -45,7 +45,7 @@ char * model_read(const char *path)
     stat(path, &statbuf);
     file_size = statbuf.st_size;
     if (file_size <= 8) {
-        fprintf(stderr, "Bad model file\n");
+        fprintf(stderr, "Bad model file: File size too small\n");
         free(file_buffer);
         return NULL;
     }
@@ -73,13 +73,13 @@ char * model_read(const char *path)
 
     magic = *((uint32_t*)file_buffer);
     if (magic != MODEL_FILE_MAGIC) {
-        fprintf(stderr, "Not vailable model file\n");
+        fprintf(stderr, "Invaild model file: Header magic error.\n");
         free(file_buffer);
         return NULL;
     }
     size  = *((uint32_t*)(file_buffer + 4));
     if (file_size != size) {
-        fprintf(stderr, "Bad model file\n");
+        fprintf(stderr, "Invaild model file: File size error.\n");
         free(file_buffer);
         return NULL;
     }
@@ -104,7 +104,5 @@ isr_model_t * model_detect(char * model)
 
         model_index ++;
     }
-
-    fprintf(stderr, "No available code for this model file.\n");
     return NULL;
 }

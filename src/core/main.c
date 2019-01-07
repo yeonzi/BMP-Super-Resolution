@@ -57,7 +57,7 @@ int main(int argc, const char ** argv)
 	input = image_open(input_file);
 
 	if (input == NULL) {
-		fprintf(stderr, "Cannot open input file.\n");
+		fprintf(stderr, "Cannot open input image file.\n");
 		return -1;
 	}
 
@@ -75,7 +75,7 @@ void show_usage(void) {
         "                        Netpbm ASCII Portable PixMap (.ppm)" NEWLINE
         "                        BGR-24 Bitmap Image File (.bmp)" NEWLINE
         "    -l              List all platform for caculate and exit." NEWLINE
-        "    -m <model>      Specific model file. (not available now)" NEWLINE
+        "    -m <model>      Specific model file." NEWLINE
         "    -o <file_name>  Specific output file." NEWLINE
         "                    Supported format:" NEWLINE
         "                        BGR-24 Bitmap Image File (.bmp)" NEWLINE
@@ -176,7 +176,9 @@ int read_parameter(int argc, char const *argv[])
         return -1;
     }
     if ( model_selected == NULL ) {
-        model_selected = "./data/vgg7.data";
+        fprintf(stderr, "Parameter Error: no model file\n");
+        show_usage();
+        return -1;
     }
     
     model_content = model_read(model_selected);
@@ -187,6 +189,7 @@ int read_parameter(int argc, char const *argv[])
 
     model = model_detect(model_content);
     if (model == NULL) {
+        fprintf(stderr, "No available code for this model file.\n");
         return -1;
     }
 
