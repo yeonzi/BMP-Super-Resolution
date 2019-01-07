@@ -276,5 +276,5 @@ Model File Format:
     image_merge_plane(img_expand, IMAGE_PLANE_Y, output_plane);
     img = image_chop_border(img_expand, 10);
 
-    return img_expand;
+    return img;
 }
