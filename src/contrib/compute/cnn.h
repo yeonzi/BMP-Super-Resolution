@@ -26,6 +26,22 @@ SOFTWARE.
 #include <contrib/compute/compute.h>
 #include <contrib/compute/compute_private.h>
 
+int cnn_init(int buffer_cnt, int data_length);
+int cnn_release(void);
+
+int cnn_write_input_data(int buffer_id, float * data);
+int cnn_push_input_data(float * data);
+float * cnn_read_input_data(int buffer_id);
+float * cnn_read_output_data(int buffer_id);
+
+int cnn_full_conv2d_layer(float * filters, float * bias, 		\
+    int input_cnt, int output_cnt, int input_w, int input_h,    \
+    int filter_w, int filter_h, int dx, int dy );
+
+int cnn_full_leaky_relu_layer(float rate);
+
+int cnn_switch_next_layer(void);
+
 int full_convolution_layer_opencl( \
     cl_mem * input, cl_mem * output, float * filters, float * bias, \
     int input_cnt, int output_cnt, int input_w, int input_h,        \

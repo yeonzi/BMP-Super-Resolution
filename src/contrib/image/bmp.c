@@ -29,7 +29,7 @@ SOFTWARE.
     BMP Basic Structs
 
 **************************************************/
-
+#pragma pack(1)
 /* BMP Header Struct */
 typedef struct {
     uint16_t bfType;
@@ -37,7 +37,8 @@ typedef struct {
     uint16_t bfReserved1;
     uint16_t bfReserved2;
     uint32_t bfOffBits;
-}__attribute__((packed)) bmp_header_t;
+}bmp_header_t;
+#pragma pack()
 
 /* Magic Number in BMP Header (bfType) */
 #define WINDOWS_BMP         0X4D42  /*BM*/
@@ -325,7 +326,7 @@ image_t * bmp_rgb24_parse(char * bmp_file, size_t fsize)
                     sizeof(bmp_header_t) + sizeof(bmp_info_t);
 
     if (fsize < data_length) {
-        perror("Broken file.");
+        fprintf(stderr, "Broken file.\n");
         return NULL;
     }
 
@@ -359,7 +360,7 @@ image_t * bmp_parse(char * bmp_file, size_t fsize)
 
     header = (bmp_header_t*)bmp_file;
     if (header->bfSize > fsize) {
-        perror("Broken file.");
+        fprintf(stderr, "Broken file.\n");
         return NULL;
     }
 
@@ -370,7 +371,7 @@ image_t * bmp_parse(char * bmp_file, size_t fsize)
     } else if (info->biBitCount == 32) {
         img = image_new(info->biWidth, info->biHeight, IMG_MODEL_BGRA);
     } else {
-        perror("Cannot Parse This file.");
+        fprintf(stderr, "Cannot Parse This file.\n");
         return NULL;
     }
 

@@ -3,7 +3,7 @@
 CC:=gcc
 # CFLAGS:=-g -O2 -Wall -Wextra -Werror
 
-CFLAGS=-O2 -Wall -Wextra -ffunction-sections -fdata-sections
+CFLAGS=-O2 -mfma -Wall -Wextra -ffunction-sections -fdata-sections
 LDFLAGS:=
 MKDIR:=mkdir -p
 

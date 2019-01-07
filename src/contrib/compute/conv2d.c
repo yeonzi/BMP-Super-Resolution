@@ -23,11 +23,9 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 
-float * conv2d_native( float * input,  int in_w, int in_h, \
-                       float * filter, int k_w,  int k_h,  \
-                       float bias, int dx, int dy )
+float * conv2d_native( float * input, float * output, int in_w, int in_h, \
+                       float * filter, int k_w, int k_h, int dx, int dy )
 {
-    float * conved;
     int x0;
     int y0;
     int x1;
@@ -36,29 +34,23 @@ float * conv2d_native( float * input,  int in_w, int in_h, \
     int y_max;
     float sum_tmp;
 
-    conved = malloc(in_w * in_h * sizeof(float));
-    if (conved == NULL) {
-        perror("Cannot alloc memory for convolution.");
-        return NULL;
-    }
-
     x_max = in_w - k_w;
     y_max = in_h - k_h;
 
     for (x0 = 0; x0 < x_max; x0++) {
         for (y0 = 0; y0 < y_max; y0++) {
-            sum_tmp = bias;
+            sum_tmp = 0;
             for(x1 = 0; x1 < k_w; x1++) {
                 for(y1 = 0; y1 < k_h; y1++) {
                     sum_tmp += \
                     input[in_w * (y0 + y1) + x0 + x1] * filter[k_w * y1 + x1];
                 }
             }
-            conved[in_w * (y0+dx) + x0 + dy] = sum_tmp;
+            output[in_w * (y0+dx) + x0 + dy] += sum_tmp;
         }
     }
 
-    return conved;
+    return output;
 }
 
 int conv2d_opencl( cl_mem  input, cl_mem output, int in_w, int in_h, \
@@ -119,14 +111,17 @@ float * conv2d( float * input,  int in_w, int in_h, \
     cl_mem input_buf;
     cl_mem output_buf;
     cl_int err;
-    if (opencl_available()) {
-        cnt = in_w * in_h;
 
-        /* Set Bias */
-        ret = malloc((cnt + 1) * sizeof(float));
-        for (index = 0; index < cnt; index++) {
-            ret[index] = bias;
-        }
+
+    cnt = in_w * in_h;
+
+    /* Set Bias */
+    ret = malloc((cnt + 1) * sizeof(float));
+    for (index = 0; index < cnt; index++) {
+        ret[index] = bias;
+    }
+
+    if (opencl_available()) {
 
         input_buf  = opencl_create_rw_buffer(input, cnt * sizeof(float), &err);
         if(err < 0) {
@@ -145,7 +140,7 @@ float * conv2d( float * input,  int in_w, int in_h, \
         clReleaseMemObject(output_buf);
 
     } else {
-        ret = conv2d_native(input, in_w, in_h, filter, k_w, k_h, bias, dx, dy);
+        conv2d_native(input, ret, in_w, in_h, filter, k_w, k_h, dx, dy);
     }
     return ret;
 }

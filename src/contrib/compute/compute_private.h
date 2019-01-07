@@ -34,9 +34,8 @@ int opencl_read_buffer(cl_mem buf, size_t size, void * data);
 
 void opencl_wait(void);
 
-float * conv2d_native( float * input,  int in_w, int in_h, \
-                       float * filter, int k_w,  int k_h,  \
-                       float bias, int dx, int dy );
+float * conv2d_native( float * input, float * output, int in_w, int in_h, \
+                       float * filter, int k_w, int k_h, int dx, int dy );
 int conv2d_opencl( cl_mem  input, cl_mem output, int in_w, int in_h, \
                     float * filter, int k_w, int k_h, int dx, int dy );
 
