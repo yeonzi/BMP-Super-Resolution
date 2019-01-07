@@ -39,6 +39,311 @@ cl_command_queue    queue;
 extern char opencl_program_str[];
 extern size_t opencl_program_str_len;
 
+static char * string_cl_success                                  = \
+"OpenCL success";
+static char * string_cl_device_not_found                         = \
+"OpenCL device not found";
+static char * string_cl_device_not_available                     = \
+"OpenCL device not available";
+static char * string_cl_compiler_not_available                   = \
+"OpenCL compiler not available";
+static char * string_cl_mem_object_allocation_failure            = \
+"OpenCL mem object allocation failure";
+static char * string_cl_out_of_resources                         = \
+"OpenCL out of resources";
+static char * string_cl_out_of_host_memory                       = \
+"OpenCL out of host memory";
+static char * string_cl_profiling_info_not_available             = \
+"OpenCL profiling info not available";
+static char * string_cl_mem_copy_overlap                         = \
+"OpenCL mem copy overlap";
+static char * string_cl_image_format_mismatch                    = \
+"OpenCL image format mismatch";
+static char * string_cl_image_format_not_supported               = \
+"OpenCL image format not supported";
+static char * string_cl_build_program_failure                    = \
+"OpenCL build program failure";
+static char * string_cl_map_failure                              = \
+"OpenCL map failure";
+static char * string_cl_misaligned_sub_buffer_offset             = \
+"OpenCL misaligned sub buffer offset";
+static char * string_cl_exec_status_error_for_events_in_wait_list= \
+"OpenCL exec status error for events in wait list";
+static char * string_cl_compile_program_failure                  = \
+"OpenCL compile program failure";
+static char * string_cl_linker_not_available                     = \
+"OpenCL linker not available";
+static char * string_cl_link_program_failure                     = \
+"OpenCL link program failure";
+static char * string_cl_device_partition_failed                  = \
+"OpenCL device partition failed";
+static char * string_cl_kernel_arg_info_not_available            = \
+"OpenCL kernel arg info not available";
+static char * string_cl_invalid_value                            = \
+"OpenCL invalid value";
+static char * string_cl_invalid_device_type                      = \
+"OpenCL invalid device type";
+static char * string_cl_invalid_platform                         = \
+"OpenCL invalid platform";
+static char * string_cl_invalid_device                           = \
+"OpenCL invalid device";
+static char * string_cl_invalid_context                          = \
+"OpenCL invalid context";
+static char * string_cl_invalid_queue_properties                 = \
+"OpenCL invalid queue properties";
+static char * string_cl_invalid_command_queue                    = \
+"OpenCL invalid command queue";
+static char * string_cl_invalid_host_ptr                         = \
+"OpenCL invalid host ptr";
+static char * string_cl_invalid_mem_object                       = \
+"OpenCL invalid mem object";
+static char * string_cl_invalid_image_format_descriptor          = \
+"OpenCL invalid image format descriptor";
+static char * string_cl_invalid_image_size                       = \
+"OpenCL invalid image size";
+static char * string_cl_invalid_sampler                          = \
+"OpenCL invalid sampler";
+static char * string_cl_invalid_binary                           = \
+"OpenCL invalid binary";
+static char * string_cl_invalid_build_options                    = \
+"OpenCL invalid build options";
+static char * string_cl_invalid_program                          = \
+"OpenCL invalid program";
+static char * string_cl_invalid_program_executable               = \
+"OpenCL invalid program executable";
+static char * string_cl_invalid_kernel_name                      = \
+"OpenCL invalid kernel name";
+static char * string_cl_invalid_kernel_definition                = \
+"OpenCL invalid kernel definition";
+static char * string_cl_invalid_kernel                           = \
+"OpenCL invalid kernel";
+static char * string_cl_invalid_arg_index                        = \
+"OpenCL invalid arg index";
+static char * string_cl_invalid_arg_value                        = \
+"OpenCL invalid arg value";
+static char * string_cl_invalid_arg_size                         = \
+"OpenCL invalid arg size";
+static char * string_cl_invalid_kernel_args                      = \
+"OpenCL invalid kernel args";
+static char * string_cl_invalid_work_dimension                   = \
+"OpenCL invalid work dimension";
+static char * string_cl_invalid_work_group_size                  = \
+"OpenCL invalid work group size";
+static char * string_cl_invalid_work_item_size                   = \
+"OpenCL invalid work item size";
+static char * string_cl_invalid_global_offset                    = \
+"OpenCL invalid global offset";
+static char * string_cl_invalid_event_wait_list                  = \
+"OpenCL invalid event wait list";
+static char * string_cl_invalid_event                            = \
+"OpenCL invalid event";
+static char * string_cl_invalid_operation                        = \
+"OpenCL invalid operation";
+static char * string_cl_invalid_gl_object                        = \
+"OpenCL invalid gl object";
+static char * string_cl_invalid_buffer_size                      = \
+"OpenCL invalid buffer size";
+static char * string_cl_invalid_mip_level                        = \
+"OpenCL invalid mip level";
+static char * string_cl_invalid_global_work_size                 = \
+"OpenCL invalid global work size";
+static char * string_cl_invalid_property                         = \
+"OpenCL invalid property";
+static char * string_cl_invalid_image_descriptor                 = \
+"OpenCL invalid image descriptor";
+static char * string_cl_invalid_compiler_options                 = \
+"OpenCL invalid compiler options";
+static char * string_cl_invalid_linker_options                   = \
+"OpenCL invalid linker options";
+static char * string_cl_invalid_device_partition_count           = \
+"OpenCL invalid device partition count";
+
+const char * opencl_get_error_string(int err)
+{
+    switch (err) {
+        case CL_SUCCESS:
+            return string_cl_success;
+            break;
+        case CL_DEVICE_NOT_FOUND:
+            return string_cl_device_not_found;
+            break;
+        case CL_DEVICE_NOT_AVAILABLE:
+            return string_cl_device_not_available;
+            break;
+        case CL_COMPILER_NOT_AVAILABLE:
+            return string_cl_compiler_not_available;
+            break;
+        case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+            return string_cl_mem_object_allocation_failure;
+            break;
+        case CL_OUT_OF_RESOURCES:
+            return string_cl_out_of_resources;
+            break;
+        case CL_OUT_OF_HOST_MEMORY:
+            return string_cl_out_of_host_memory;
+            break;
+        case CL_PROFILING_INFO_NOT_AVAILABLE:
+            return string_cl_profiling_info_not_available;
+            break;
+        case CL_MEM_COPY_OVERLAP:
+            return string_cl_mem_copy_overlap;
+            break;
+        case CL_IMAGE_FORMAT_MISMATCH:
+            return string_cl_image_format_mismatch;
+            break;
+        case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+            return string_cl_image_format_not_supported;
+            break;
+        case CL_BUILD_PROGRAM_FAILURE:
+            return string_cl_build_program_failure;
+            break;
+        case CL_MAP_FAILURE:
+            return string_cl_map_failure;
+            break;
+        case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+            return string_cl_misaligned_sub_buffer_offset;
+            break;
+        case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+            return string_cl_exec_status_error_for_events_in_wait_list;
+            break;
+        case CL_COMPILE_PROGRAM_FAILURE:
+            return string_cl_compile_program_failure;
+            break;
+        case CL_LINKER_NOT_AVAILABLE:
+            return string_cl_linker_not_available;
+            break;
+        case CL_LINK_PROGRAM_FAILURE:
+            return string_cl_link_program_failure;
+            break;
+        case CL_DEVICE_PARTITION_FAILED:
+            return string_cl_device_partition_failed;
+            break;
+        case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+            return string_cl_kernel_arg_info_not_available;
+            break;
+        case CL_INVALID_VALUE:
+            return string_cl_invalid_value;
+            break;
+        case CL_INVALID_DEVICE_TYPE:
+            return string_cl_invalid_device_type;
+            break;
+        case CL_INVALID_PLATFORM:
+            return string_cl_invalid_platform;
+            break;
+        case CL_INVALID_DEVICE:
+            return string_cl_invalid_device;
+            break;
+        case CL_INVALID_CONTEXT:
+            return string_cl_invalid_context;
+            break;
+        case CL_INVALID_QUEUE_PROPERTIES:
+            return string_cl_invalid_queue_properties;
+            break;
+        case CL_INVALID_COMMAND_QUEUE:
+            return string_cl_invalid_command_queue;
+            break;
+        case CL_INVALID_HOST_PTR:
+            return string_cl_invalid_host_ptr;
+            break;
+        case CL_INVALID_MEM_OBJECT:
+            return string_cl_invalid_mem_object;
+            break;
+        case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+            return string_cl_invalid_image_format_descriptor;
+            break;
+        case CL_INVALID_IMAGE_SIZE:
+            return string_cl_invalid_image_size;
+            break;
+        case CL_INVALID_SAMPLER:
+            return string_cl_invalid_sampler;
+            break;
+        case CL_INVALID_BINARY:
+            return string_cl_invalid_binary;
+            break;
+        case CL_INVALID_BUILD_OPTIONS:
+            return string_cl_invalid_build_options;
+            break;
+        case CL_INVALID_PROGRAM:
+            return string_cl_invalid_program;
+            break;
+        case CL_INVALID_PROGRAM_EXECUTABLE:
+            return string_cl_invalid_program_executable;
+            break;
+        case CL_INVALID_KERNEL_NAME:
+            return string_cl_invalid_kernel_name;
+            break;
+        case CL_INVALID_KERNEL_DEFINITION:
+            return string_cl_invalid_kernel_definition;
+            break;
+        case CL_INVALID_KERNEL:
+            return string_cl_invalid_kernel;
+            break;
+        case CL_INVALID_ARG_INDEX:
+            return string_cl_invalid_arg_index;
+            break;
+        case CL_INVALID_ARG_VALUE:
+            return string_cl_invalid_arg_value;
+            break;
+        case CL_INVALID_ARG_SIZE:
+            return string_cl_invalid_arg_size;
+            break;
+        case CL_INVALID_KERNEL_ARGS:
+            return string_cl_invalid_kernel_args;
+            break;
+        case CL_INVALID_WORK_DIMENSION:
+            return string_cl_invalid_work_dimension;
+            break;
+        case CL_INVALID_WORK_GROUP_SIZE:
+            return string_cl_invalid_work_group_size;
+            break;
+        case CL_INVALID_WORK_ITEM_SIZE:
+            return string_cl_invalid_work_item_size;
+            break;
+        case CL_INVALID_GLOBAL_OFFSET:
+            return string_cl_invalid_global_offset;
+            break;
+        case CL_INVALID_EVENT_WAIT_LIST:
+            return string_cl_invalid_event_wait_list;
+            break;
+        case CL_INVALID_EVENT:
+            return string_cl_invalid_event;
+            break;
+        case CL_INVALID_OPERATION:
+            return string_cl_invalid_operation;
+            break;
+        case CL_INVALID_GL_OBJECT:
+            return string_cl_invalid_gl_object;
+            break;
+        case CL_INVALID_BUFFER_SIZE:
+            return string_cl_invalid_buffer_size;
+            break;
+        case CL_INVALID_MIP_LEVEL:
+            return string_cl_invalid_mip_level;
+            break;
+        case CL_INVALID_GLOBAL_WORK_SIZE:
+            return string_cl_invalid_global_work_size;
+            break;
+        case CL_INVALID_PROPERTY:
+            return string_cl_invalid_property;
+            break;
+        case CL_INVALID_IMAGE_DESCRIPTOR:
+            return string_cl_invalid_image_descriptor;
+            break;
+        case CL_INVALID_COMPILER_OPTIONS:
+            return string_cl_invalid_compiler_options;
+            break;
+        case CL_INVALID_LINKER_OPTIONS:
+            return string_cl_invalid_linker_options;
+            break;
+        case CL_INVALID_DEVICE_PARTITION_COUNT:
+            return string_cl_invalid_device_partition_count;
+            break;
+        default:
+            return string_cl_success;
+            break;
+    }
+}
+
 int opencl_available(void)
 {
     extern int opencl_available_status;
