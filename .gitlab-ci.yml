@@ -1,10 +1,21 @@
 stages:
+  - build_test
   - github-mirror
+
+arm_linux_build_test:
+  stage: build_test
+  script:
+    - make dirs
+    - make
+  tags:
+    - ARM
+    - linux
+    - OpenCL
+  allow_failure: false
 
 github-push:
   stage: github-mirror
   script:
-    - git pull origin develop
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
     - git push github develop --force
   tags:
