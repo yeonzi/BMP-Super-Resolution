@@ -9,6 +9,7 @@ CC?=gcc
 
 CFLAGS+=-O2 -Wall -Wextra -ffunction-sections -fdata-sections
 LDFLAGS?=-lOpenCL
+LDFLAGS+=-lm
 MKDIR=mkdir -p
 
 DIRS=bin build
