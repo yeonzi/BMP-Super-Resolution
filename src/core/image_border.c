@@ -44,6 +44,7 @@ image_t * image_make_border(image_t * img, int size)
         }
     }
 
+
     for (y = 0; y < img->height; y++) {
         for (x = 0; x < size; x++) {
             /* Left Part */
@@ -72,8 +73,9 @@ image_t * image_make_border(image_t * img, int size)
             dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
 
             /* Down Part */
-            src = image_pixel(new_img, x, img->width + size - 1);
-            dst = image_pixel(new_img, x, y + img->width + size);
+
+            src = image_pixel(new_img, x, img->height + size);
+            dst = image_pixel(new_img, x, y + img->height + size);
             dst[IMG_CHANNEL_B] = src[IMG_CHANNEL_B];
             dst[IMG_CHANNEL_G] = src[IMG_CHANNEL_G];
             dst[IMG_CHANNEL_R] = src[IMG_CHANNEL_R];
