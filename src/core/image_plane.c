@@ -68,45 +68,45 @@ float * image_extract_plane(image_t * img, int plane)
     dump_p = data;
 
     if (plane == IMAGE_PLANE_B) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 *dump_p = (float)(image_pixel(img, x, y)[IMG_CHANNEL_B]);
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_G) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 *dump_p = (float)(image_pixel(img, x, y)[IMG_CHANNEL_G]);
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_R) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 *dump_p = (float)(image_pixel(img, x, y)[IMG_CHANNEL_R]);
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_Y) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 *dump_p = (0.299 * R) + (0.587 * G) + (0.114 * B);
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_CB) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 *dump_p = 128.0 - (0.168736 * R) - (0.331264 * G) + (0.5 * B);
                 dump_p ++;
             }
         }
     } else if (plane == IMAGE_PLANE_CR) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 *dump_p = 128.0 + (0.5 * R) - (0.418688 * G) - (0.081312 * B);
                 dump_p ++;
@@ -128,8 +128,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
     dump_p = data;
 
     if (plane == IMAGE_PLANE_B) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 tmp = round(*dump_p);
                 if (tmp > 255) { tmp = 255; }
                 if (tmp < 0) { tmp = 0; }
@@ -138,8 +138,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
             }
         }
     } else if (plane == IMAGE_PLANE_G) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 tmp = round(*dump_p);
                 if (tmp > 255) { tmp = 255; }
                 if (tmp < 0) { tmp = 0; }
@@ -148,8 +148,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
             }
         }
     } else if (plane == IMAGE_PLANE_R) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 tmp = round(*dump_p);
                 if (tmp > 255) { tmp = 255; }
                 if (tmp < 0) { tmp = 0; }
@@ -158,8 +158,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
             }
         }
     } else if (plane == IMAGE_PLANE_Y) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 rgb_to_ycbcr();
                 Y = *dump_p;
@@ -169,8 +169,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
             }
         }
     } else if (plane == IMAGE_PLANE_CB) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 rgb_to_ycbcr();
                 Cb = *dump_p;
@@ -180,8 +180,8 @@ image_t * image_merge_plane(image_t * img, int plane, float * data)
             }
         }
     } else if (plane == IMAGE_PLANE_CR) {
-        for (x = 0; x < img->width; x++) {
-            for (y = 0; y < img->height; y++) {
+        for (y = 0; y < img->height; y++) {
+            for (x = 0; x < img->width; x++) {
                 read_rgb_data(img,x,y);
                 rgb_to_ycbcr();
                 Cr = *dump_p;
