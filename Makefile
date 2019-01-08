@@ -7,13 +7,13 @@ BIN_DIR=bin
 
 CC?=gcc
 
-CFLAGS+=-O2 -mfma -Wall -Wextra -ffunction-sections -fdata-sections
+CFLAGS+=-O2 -Wall -Wextra -ffunction-sections -fdata-sections
 LDFLAGS?=-lOpenCL
 MKDIR=mkdir -p
 
 DIRS=bin build
 
-CFLAGS+= -I${INC_DIR}
+CFLAGS+= -I${INC_DIR} -I/usr/local/include
 
 all:bin/image_quarter bin/image_precision bin/image_2x
 
