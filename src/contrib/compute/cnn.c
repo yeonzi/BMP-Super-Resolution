@@ -251,8 +251,6 @@ int cnn_switch_next_layer(void)
         ret = cnn_switch_next_layer_native();
     }
 
-    fprintf(stderr, "Finished %d => %d\n", input_cnt_now, output_cnt_now);
-
     input_cnt_now = output_cnt_now;
     output_cnt_now = 0;
 
