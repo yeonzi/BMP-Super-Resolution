@@ -32,6 +32,9 @@ cl_mem opencl_create_ro_buffer(void * data, size_t size, int * err);
 
 int opencl_read_buffer(cl_mem buf, size_t size, void * data);
 
+int opencl_buffer_dump(cl_mem src, cl_mem dst, size_t size);
+int opencl_mem_set(cl_mem mem, size_t size, float data);
+
 void opencl_wait(void);
 
 float * conv2d_native( float * input, float * output, int in_w, int in_h, \
