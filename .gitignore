@@ -60,6 +60,6 @@ dkms.conf
 *.png
 
 data/
-obj/
+build/
 bin/
 
