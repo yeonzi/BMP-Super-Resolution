@@ -21,10 +21,10 @@ SOFTWARE.
 #ifndef YISR_COMPUTE_H
 #define YISR_COMPUTE_H 1
 
-#ifdef __APPLE__    
-#include <OpenCL/cl.h>    
-#else    
-#include <CL/cl.h>    
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
 #endif
 
 int opencl_available(void);
@@ -37,7 +37,5 @@ float * conv2d( float * input,  int in_w, int in_h, \
 
 float * relu(float * input, int length);
 float * leaky_relu(float * input, float rate, int length);
-
-
 
 #endif
