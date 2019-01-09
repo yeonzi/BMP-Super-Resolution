@@ -28,7 +28,7 @@ github-push:
   stage: github-mirror
   script:
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
-    - git push github develop --force
+    - git push github gpu-optimization --force
   tags:
     - deploy
     - github
