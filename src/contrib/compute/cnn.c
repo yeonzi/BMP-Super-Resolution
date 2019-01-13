@@ -520,7 +520,7 @@ int cnn_switch_next_layer_opencl(void)
     for (index = 0; index < output_cnt_now; index++) {
         buffer_tmp = input_buffer_opencl[index];
         input_buffer_opencl[index]  = output_buffer_opencl[index];
-        output_buffer_opencl[index] = input_buffer_opencl[index];
+        output_buffer_opencl[index] = buffer_tmp;
     }
 
     return 0;
