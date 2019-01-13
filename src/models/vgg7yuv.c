@@ -267,7 +267,7 @@ Model File Format:
     zoom_factor = input_max / output_max;
     fprintf(stderr, "Zoom Factor Detected: %f.\n", zoom_factor);
 
-    for (img_index = 0; img_index < img_w * img_w; img_index ++) {
+    for (img_index = 0; img_index < img_w * img_h; img_index ++) {
         output_plane[img_index] = output_plane[img_index] * zoom_factor;
     }
 

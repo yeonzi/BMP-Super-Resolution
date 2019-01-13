@@ -443,7 +443,6 @@ int group_conv2d_opencl( float * filters, float * bias, \
     }
 
     buffer_size = input_cnt*output_cnt*filter_w*filter_h*sizeof(float);
-    fprintf(stderr, "Filter buffer size: %d.\n", buffer_size);
 
     filter_buf = opencl_create_rw_buffer(buffer_size, &err);
     if(err < 0) {
