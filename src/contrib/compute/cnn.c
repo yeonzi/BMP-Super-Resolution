@@ -513,10 +513,15 @@ int cnn_switch_next_layer_opencl(void)
     extern int output_cnt_now;
     extern cl_mem * input_buffer_opencl;
     extern cl_mem * output_buffer_opencl;
+
+    cl_mem buffer_tmp;
+
     int index;
 
     for (index = 0; index < output_cnt_now; index++) {
-        opencl_buffer_dump(output_buffer_opencl[index], input_buffer_opencl[index], buffer_data_length);
+        buffer_tmp = input_buffer_opencl[index];
+        input_buffer_opencl[index]  = output_buffer_opencl[index];
+        output_buffer_opencl[index] = input_buffer_opencl[index];
     }
 
     return 0;

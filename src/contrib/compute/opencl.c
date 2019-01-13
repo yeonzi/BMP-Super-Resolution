@@ -635,36 +635,6 @@ int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data)
     return clEnqueueWriteBuffer(queue, buf, CL_TRUE, offset, size, data, 0, NULL, NULL); 
 }
 
-int opencl_buffer_dump(cl_mem src, cl_mem dst, size_t size)
-{
-    cl_int          err;
-    cl_kernel       kernel;
-
-    kernel  = opencl_load_kernel("mem_dump", &err);
-    if(err < 0) {
-        fprintf(stderr, "Cannot create OpenCL kernal object.\n");
-        return -1;  
-    }
-
-    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &src);
-    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &dst);
-
-    if(err < 0) {
-        fprintf(stderr, "Couldn't create a kernel argument\n");
-        return -1;
-    }
-
-    err = opencl_add_job(kernel, 1, &size);
-    if(err < 0) {
-        fprintf(stderr, "Couldn't enqueue the kernel\n");
-        return -1;
-    }
-
-    clReleaseKernel(kernel);
-
-    return 0;
-}
-
 int opencl_mem_set(cl_mem mem, size_t size, float data)
 {
     cl_int          err;
