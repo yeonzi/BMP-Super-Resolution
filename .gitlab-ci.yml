@@ -2,6 +2,19 @@ stages:
   - build_test
   - github-mirror
 
+x86_64-w64-mingw32_build_test:
+  stage: build_test
+  script:
+    - mkdir lib64
+    - wget http://101.200.150.73/libOpenCL.a -O ./lib64/libOpenCL.a
+    - mingw64-make dirs
+    - mingw64-make LDFLAGS=-Llib64\ -lOpenCL
+  tags:
+    - x86_64-w64-mingw32
+    - linux
+    - OpenCL
+  allow_failure: false
+
 x86_64_linux_build_test:
   stage: build_test
   script:
@@ -28,7 +41,7 @@ github-push:
   stage: github-mirror
   script:
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
-    - git push github gpu-optimization --force
+    - git push github gpu-cache --force
   tags:
     - deploy
     - github
