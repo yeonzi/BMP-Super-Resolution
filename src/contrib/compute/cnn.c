@@ -452,7 +452,7 @@ int group_conv2d_opencl( float * filters, float * bias, \
         return -1;  
     }
 
-    filter_buf = opencl_create_rw_buffer(filters, input_w*input_h*filter_w*filter_h*sizeof(float), &err);
+    filter_buf = opencl_create_rw_buffer(filters, input_cnt*output_cnt*sizeof(float), &err);
     if(err < 0) {
         fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
         return -1;  
