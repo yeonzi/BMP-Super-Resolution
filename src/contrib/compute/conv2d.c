@@ -70,7 +70,8 @@ int conv2d_opencl( cl_mem  input, cl_mem output, int in_w, int in_h, \
         return -1;  
     }
 
-    filter_buf = opencl_create_rw_buffer(filter, k_w*k_h*sizeof(float), &err);
+    filter_buf = opencl_create_rw_buffer(k_w * k_h * sizeof(float), &err);
+    err = opencl_write_buffer(filter_buf, 0, k_w * k_h * sizeof(float), filter);
     if(err < 0) {
         fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
         return -1;  
@@ -123,11 +124,12 @@ float * conv2d( float * input,  int in_w, int in_h, \
 
     if (opencl_available()) {
 
-        input_buf  = opencl_create_rw_buffer(input, cnt * sizeof(float), &err);
+        input_buf  = opencl_create_rw_buffer(cnt * sizeof(float), &err);
+        err |= opencl_write_buffer(input_buf, 0, cnt * sizeof(float), input);
         if(err < 0) {
             fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
         }
-        output_buf = opencl_create_rw_buffer(ret, cnt * sizeof(float), &err);
+        output_buf = opencl_create_rw_buffer(cnt * sizeof(float), &err);
         if(err < 0) {
             fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
         }

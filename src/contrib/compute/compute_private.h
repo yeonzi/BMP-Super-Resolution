@@ -27,10 +27,11 @@ cl_kernel opencl_load_kernel(char * program_name, int * err);
 
 int opencl_add_job(cl_kernel kernel, int dim, size_t* work_size);
 
-cl_mem opencl_create_rw_buffer(void * data, size_t size, int * err);
-cl_mem opencl_create_ro_buffer(void * data, size_t size, int * err);
+cl_mem opencl_create_rw_buffer(size_t size, int * err);
+cl_mem opencl_create_ro_buffer(size_t size, int * err);
 
 int opencl_read_buffer(cl_mem buf, size_t size, void * data);
+int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data);
 
 int opencl_buffer_dump(cl_mem src, cl_mem dst, size_t size);
 int opencl_mem_set(cl_mem mem, size_t size, float data);

@@ -275,10 +275,6 @@ int cnn_init_opencl_buffer()
     int index;
     cl_int err;
 
-    float * temp_buffer;
-
-    temp_buffer = malloc(buffer_data_length * sizeof(float));
-
     /* Init input buffer array */
 
     input_buffer_opencl = malloc(buffer_length * sizeof(cl_mem));
@@ -289,7 +285,7 @@ int cnn_init_opencl_buffer()
 
     for (index = 0; index < buffer_length; index++) {
         input_buffer_opencl[index] = opencl_create_rw_buffer( \
-            temp_buffer, buffer_data_length * sizeof(float), &err);
+            buffer_data_length * sizeof(float), &err);
     }
 
     output_buffer_opencl = malloc(buffer_length * sizeof(cl_mem));
@@ -300,26 +296,19 @@ int cnn_init_opencl_buffer()
 
     for (index = 0; index < buffer_length; index++) {
         output_buffer_opencl[index] = opencl_create_rw_buffer( \
-            temp_buffer, buffer_data_length * sizeof(float), &err);
+            buffer_data_length * sizeof(float), &err);
     }
-
-    free(temp_buffer);
 
     return 0;
 }
 
 int cnn_write_opencl_input_data(int buffer_id, float * data)
 {
-    cl_int err;
     extern cl_mem * input_buffer_opencl;
     extern int buffer_data_length;
 
-    clReleaseMemObject(input_buffer_opencl[buffer_id]);
-
-    input_buffer_opencl[buffer_id] = opencl_create_rw_buffer( \
-        data, buffer_data_length * sizeof(float), &err);
-
-    return err;
+    return opencl_write_buffer(input_buffer_opencl[buffer_id], \
+        0, buffer_data_length * sizeof(float), data);
 }
 
 float * cnn_read_opencl_input_data(int buffer_id)
@@ -429,6 +418,7 @@ int group_conv2d_opencl( float * filters, float * bias, \
     cl_kernel       kernel;
     cl_mem          filter_buf;
     size_t          work_size[2];
+    size_t          buffer_size;
 
     int input_index;
     int output_index;
@@ -452,9 +442,17 @@ int group_conv2d_opencl( float * filters, float * bias, \
         return -1;  
     }
 
-    filter_buf = opencl_create_rw_buffer(filters, input_w*input_h*filter_w*filter_h*sizeof(float), &err);
+    buffer_size = input_cnt*output_cnt*filter_w*filter_h*sizeof(float);
+    fprintf(stderr, "Filter buffer size: %d.\n", buffer_size);
+
+    filter_buf = opencl_create_rw_buffer(buffer_size, &err);
     if(err < 0) {
         fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
+        return -1;  
+    }
+    err = opencl_write_buffer(filter_buf, 0, buffer_size, filters);
+    if(err < 0) {
+        fprintf(stderr, "Cannot write OpenCL memory object. %d\n", err);
         return -1;  
     }
 
@@ -494,53 +492,6 @@ int group_conv2d_opencl( float * filters, float * bias, \
     clReleaseMemObject(filter_buf);
 
     opencl_wait();
-
-    return 0;
-}
-
-int full_convolution_layer_opencl( \
-    cl_mem * input, cl_mem * output, float * filters, float * bias, \
-    int input_cnt, int output_cnt, int input_w, int input_h,        \
-    int filter_w, int filter_h, int dx, int dy )
-{
-    int input_index;
-    int output_index;
-    int arr_index;
-    int arr_size;
-    int filter_size;
-
-    float * bias_arr;
-    float * filter;
-
-    cl_int err;
-
-    arr_size = input_w * input_h;
-    filter_size = filter_w * filter_h;
-    filter = filters;
-
-    fprintf(stderr, "Running Full Convolution Layer: %d => %d (Graph Size: %d x %d, Window Size: %d x %d)\n", \
-        input_cnt, output_cnt, input_w, input_h, filter_w, filter_h);
-
-    for (output_index = 0; output_index < output_cnt; output_index++) {
-        /* Create and alloc */
-        bias_arr = malloc(arr_size * sizeof(float));
-        for (arr_index = 0; arr_index < arr_size; arr_index ++) {
-            bias_arr[arr_index] = bias[output_index];
-        }
-
-        output[output_index] = opencl_create_rw_buffer( \
-            bias_arr, arr_size * sizeof(float), &err);
-    }
-
-    for (output_index = 0; output_index < output_cnt; output_index++) {
-        for (input_index = 0; input_index < input_cnt; input_index++) {
-            conv2d_opencl(input[input_index], output[output_index], input_w, input_h, \
-                        filter, filter_w, filter_h, dx, dy);
-            opencl_wait();
-            filter = &filter[filter_size];
-        }
-    }
-
 
     return 0;
 }

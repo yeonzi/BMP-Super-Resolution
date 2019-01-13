@@ -611,20 +611,28 @@ int opencl_add_job(cl_kernel kernel, int dim, size_t* work_size)
     return clEnqueueNDRangeKernel(queue, kernel, dim, NULL, work_size, NULL, 0, NULL, NULL);
 }
 
-cl_mem opencl_create_rw_buffer(void * data, size_t size, int* err)
+cl_mem opencl_create_rw_buffer(size_t size, int* err)
 {
-    return clCreateBuffer(context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR|CL_MEM_ALLOC_HOST_PTR, size, data, err);
+    extern cl_context       context;
+    return clCreateBuffer(context, CL_MEM_READ_WRITE, size, NULL, err);
 }
 
-cl_mem opencl_create_ro_buffer(void * data, size_t size, int* err)
+cl_mem opencl_create_ro_buffer(size_t size, int* err)
 {
-    return clCreateBuffer(context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, size, data, err);
+    extern cl_context       context;
+    return clCreateBuffer(context, CL_MEM_READ_ONLY, size, NULL, err);
 }
 
 int opencl_read_buffer(cl_mem buf, size_t size, void * data)
 {
     clFinish(queue);
     return clEnqueueReadBuffer(queue, buf, CL_TRUE, 0, size, data, 0,NULL,NULL); 
+}
+
+int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data)
+{
+    extern cl_command_queue queue;
+    return clEnqueueWriteBuffer(queue, buf, CL_TRUE, offset, size, data, 0, NULL, NULL); 
 }
 
 int opencl_buffer_dump(cl_mem src, cl_mem dst, size_t size)

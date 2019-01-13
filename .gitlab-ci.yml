@@ -40,6 +40,7 @@ arm_linux_build_test:
 github-push:
   stage: github-mirror
   script:
+    - git pull origin gpu-cache
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
     - git push github gpu-cache --force
   tags:

@@ -120,7 +120,8 @@ float * relu(float * input, int length)
 
     if (opencl_available()) {
 
-        buffer  = opencl_create_rw_buffer(input, length * sizeof(float), &err);
+        buffer  = opencl_create_rw_buffer(length * sizeof(float), &err);
+        opencl_write_buffer(buffer, 0, length * sizeof(float), input);
         
         relu_opencl(buffer, length);
 
@@ -141,7 +142,8 @@ float * leaky_relu(float * input, float rate, int length)
 
     if (opencl_available()) {
 
-        buffer  = opencl_create_rw_buffer(input, length * sizeof(float), &err);
+        buffer  = opencl_create_rw_buffer(length * sizeof(float), &err);
+        opencl_write_buffer(buffer, 0, length * sizeof(float), input);
         
         leaky_relu_opencl(buffer, rate, length);
 
