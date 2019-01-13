@@ -51,12 +51,6 @@ __kernel void leaky_relu (__global float * input, float rate){
 	}
 }
 
-__kernel void mem_dump (__global float * src, __global float * dst){
-	int index;
-	index = get_global_id(0);
-	dst[index] = src[index];
-}
-
 __kernel void mem_set (__global float * mem, float data){
 	int index;
 	index = get_global_id(0);
