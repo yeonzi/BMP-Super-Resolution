@@ -23,6 +23,12 @@ SOFTWARE.
 
 #include <contrib/compute/compute.h>
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
 cl_kernel opencl_load_kernel(char * program_name, int * err);
 
 int opencl_add_job(cl_kernel kernel, int dim, size_t* work_size);
