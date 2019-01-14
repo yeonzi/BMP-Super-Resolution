@@ -30,10 +30,10 @@ int opencl_add_job(cl_kernel kernel, int dim, size_t* work_size);
 cl_mem opencl_create_rw_buffer(size_t size, int * err);
 cl_mem opencl_create_ro_buffer(size_t size, int * err);
 
-int opencl_read_buffer(cl_mem buf, size_t size, void * data);
+int opencl_read_buffer(cl_mem buf, size_t offset, size_t size, void * data);
 int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data);
 
-int opencl_mem_set(cl_mem mem, size_t size, float data);
+int opencl_mem_set(cl_mem mem, size_t offset, size_t size, float data);
 
 void opencl_wait(void);
 

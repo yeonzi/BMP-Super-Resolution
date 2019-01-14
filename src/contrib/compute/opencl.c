@@ -623,10 +623,11 @@ cl_mem opencl_create_ro_buffer(size_t size, int* err)
     return clCreateBuffer(context, CL_MEM_READ_ONLY, size, NULL, err);
 }
 
-int opencl_read_buffer(cl_mem buf, size_t size, void * data)
+int opencl_read_buffer(cl_mem buf, size_t offset, size_t size, void * data)
 {
+    extern cl_command_queue queue;
     clFinish(queue);
-    return clEnqueueReadBuffer(queue, buf, CL_TRUE, 0, size, data, 0,NULL,NULL); 
+    return clEnqueueReadBuffer(queue, buf, CL_TRUE, offset, size, data, 0, NULL, NULL); 
 }
 
 int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data)
@@ -635,7 +636,7 @@ int opencl_write_buffer(cl_mem buf, size_t offset, size_t size, void * data)
     return clEnqueueWriteBuffer(queue, buf, CL_TRUE, offset, size, data, 0, NULL, NULL); 
 }
 
-int opencl_mem_set(cl_mem mem, size_t size, float data)
+int opencl_mem_set(cl_mem mem, size_t offset, size_t size, float data)
 {
     cl_int          err;
     cl_kernel       kernel;
@@ -647,7 +648,8 @@ int opencl_mem_set(cl_mem mem, size_t size, float data)
     }
 
     err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &mem);
-    err |= clSetKernelArg(kernel, 1, sizeof(float), &data);
+    err |= clSetKernelArg(kernel, 1, sizeof(size_t), &offset);
+    err |= clSetKernelArg(kernel, 2, sizeof(float), &data);
 
     if(err < 0) {
         fprintf(stderr, "Couldn't create a kernel argument\n");

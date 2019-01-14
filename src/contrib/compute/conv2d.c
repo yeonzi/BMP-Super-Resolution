@@ -136,7 +136,7 @@ float * conv2d( float * input,  int in_w, int in_h, \
         conv2d_opencl(input_buf, output_buf, in_w, in_h, \
                         filter, k_w, k_h, dx, dy);
 
-        opencl_read_buffer(output_buf, cnt * sizeof(float), ret);
+        opencl_read_buffer(output_buf, 0, cnt * sizeof(float), ret);
 
         clReleaseMemObject(input_buf);
         clReleaseMemObject(output_buf);

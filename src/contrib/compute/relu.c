@@ -125,7 +125,7 @@ float * relu(float * input, int length)
         
         relu_opencl(buffer, length);
 
-        opencl_read_buffer(buffer, length * sizeof(float), input);
+        opencl_read_buffer(buffer, 0, length * sizeof(float), input);
 
         clReleaseMemObject(buffer);
 
@@ -147,7 +147,7 @@ float * leaky_relu(float * input, float rate, int length)
         
         leaky_relu_opencl(buffer, rate, length);
 
-        opencl_read_buffer(buffer, length * sizeof(float), input);
+        opencl_read_buffer(buffer, 0, length * sizeof(float), input);
 
         clReleaseMemObject(buffer);
 
