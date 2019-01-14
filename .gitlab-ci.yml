@@ -40,6 +40,8 @@ arm_linux_build_test:
 github-push:
   stage: github-mirror
   script:
+    - git pull origin develop
+    - git checkout develop
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
     - git push github develop --force
   tags:

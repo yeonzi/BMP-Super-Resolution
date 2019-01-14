@@ -73,6 +73,10 @@ int full_conv2d_layer_native( float * filters, float * bias, \
     int input_cnt, int output_cnt, int input_w, int input_h, \
     int filter_w, int filter_h, int dx, int dy );
 
+int group_conv2d_opencl( float * filters, float * bias, \
+    int input_cnt, int output_cnt, int input_w, int input_h, \
+    int filter_w, int filter_h, int dx, int dy );
+
 int full_leaky_relu_layer_opencl(cl_mem * buffer, \
     float rate, int data_length, int plane_cnt);
 int full_leaky_relu_layer_native(float ** buffer, \
@@ -203,7 +207,9 @@ int cnn_full_conv2d_layer(float * filters, float * bias,        \
         layer_id, input_cnt, output_cnt, input_w, input_h, filter_w, filter_h);
 
     if (run_with_opencl) {
-        return full_conv2d_layer_opencl(filters, bias, input_cnt, output_cnt, \
+        // return full_conv2d_layer_opencl(filters, bias, input_cnt, output_cnt, \
+        //     input_w, input_h, filter_w, filter_h, dx, dy );
+        return group_conv2d_opencl(filters, bias, input_cnt, output_cnt, \
             input_w, input_h, filter_w, filter_h, dx, dy );
     } else {
         return full_conv2d_layer_native(filters, bias, input_cnt, output_cnt, \
@@ -264,6 +270,16 @@ int cnn_init_opencl_buffer()
     extern cl_mem * output_buffer_opencl;
 
     extern int buffer_length;
+    extern int buffer_data_length;
+
+    int index;
+    cl_int err;
+
+    float * temp_buffer;
+
+    temp_buffer = malloc(buffer_data_length * sizeof(float));
+
+    /* Init input buffer array */
 
     input_buffer_opencl = malloc(buffer_length * sizeof(cl_mem));
     if (input_buffer_opencl == NULL) {
@@ -271,11 +287,23 @@ int cnn_init_opencl_buffer()
         return -1;
     }
 
+    for (index = 0; index < buffer_length; index++) {
+        input_buffer_opencl[index] = opencl_create_rw_buffer( \
+            temp_buffer, buffer_data_length * sizeof(float), &err);
+    }
+
     output_buffer_opencl = malloc(buffer_length * sizeof(cl_mem));
     if (input_buffer_opencl == NULL) {
         perror("Cannot alloc memory for output buffers");
         return -1;
     }
+
+    for (index = 0; index < buffer_length; index++) {
+        output_buffer_opencl[index] = opencl_create_rw_buffer( \
+            temp_buffer, buffer_data_length * sizeof(float), &err);
+    }
+
+    free(temp_buffer);
 
     return 0;
 }
@@ -285,6 +313,8 @@ int cnn_write_opencl_input_data(int buffer_id, float * data)
     cl_int err;
     extern cl_mem * input_buffer_opencl;
     extern int buffer_data_length;
+
+    clReleaseMemObject(input_buffer_opencl[buffer_id]);
 
     input_buffer_opencl[buffer_id] = opencl_create_rw_buffer( \
         data, buffer_data_length * sizeof(float), &err);
@@ -332,14 +362,10 @@ int full_conv2d_layer_opencl( float * filters, float * bias, \
 {
     int input_index;
     int output_index;
-    int arr_index;
     int arr_size;
     int filter_size;
 
-    float * bias_arr;
     float * filter;
-
-    cl_int err;
 
     extern cl_mem * input_buffer_opencl;
     extern cl_mem * output_buffer_opencl;
@@ -354,20 +380,9 @@ int full_conv2d_layer_opencl( float * filters, float * bias, \
     filter = filters;
 
 
-    /* Create and alloc memory for bias array */
-    bias_arr = malloc(arr_size * sizeof(float));
-
-    /* set bias for each planc */
     for (output_index = 0; output_index < output_cnt; output_index++) {
-        for (arr_index = 0; arr_index < arr_size; arr_index ++) {
-            bias_arr[arr_index] = bias[output_index];
-        }
-
-        output_buffer_opencl[output_index] = opencl_create_rw_buffer( \
-            bias_arr, arr_size * sizeof(float), &err);
+        opencl_mem_set(output_buffer_opencl[output_index], buffer_data_length, bias[output_index]);
     }
-
-    free(bias_arr);
 
     for (output_index = 0; output_index < output_cnt; output_index++) {
         for (input_index = 0; input_index < input_cnt; input_index++) {
@@ -375,11 +390,91 @@ int full_conv2d_layer_opencl( float * filters, float * bias, \
                             output_buffer_opencl[output_index], \
                             input_w, input_h, \
                             filter, filter_w, filter_h, dx, dy);
-            opencl_wait();
             process_now ++;
             filter = &filter[filter_size];
         }
     }
+
+
+    opencl_wait();
+
+    return 0;
+}
+
+
+int group_conv2d_opencl( float * filters, float * bias, \
+    int input_cnt, int output_cnt, int input_w, int input_h,        \
+    int filter_w, int filter_h, int dx, int dy )
+{
+    cl_int          err;
+    cl_kernel       kernel;
+    cl_mem          filter_buf;
+    size_t          work_size[2];
+
+    int input_index;
+    int output_index;
+    int filter_index;
+
+    extern cl_mem * input_buffer_opencl;
+    extern cl_mem * output_buffer_opencl;
+
+    extern int process_total;
+    extern int process_now;
+
+    process_total = input_cnt * output_cnt;
+    process_now   = 0;
+
+    work_size[0] = input_w - filter_w;
+    work_size[1] = input_h - filter_h;
+
+    kernel  = opencl_load_kernel("group_conv2d", &err);
+    if(err < 0) {
+        fprintf(stderr, "Cannot create OpenCL kernal object.\n");
+        return -1;  
+    }
+
+    filter_buf = opencl_create_rw_buffer(filters, input_cnt*output_cnt*filter_w*filter_h*sizeof(float), &err);
+    if(err < 0) {
+        fprintf(stderr, "Cannot create OpenCL memory object. %d\n", err);
+        return -1;  
+    }
+
+    for (output_index = 0; output_index < output_cnt; output_index++) {
+        opencl_mem_set(output_buffer_opencl[output_index], buffer_data_length, bias[output_index]);
+    }
+
+    filter_index = 0;
+
+    for (output_index = 0; output_index < output_cnt; output_index++) {
+        for (input_index = 0; input_index < input_cnt; input_index++) {
+            err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer_opencl[input_index]);
+            err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &output_buffer_opencl[output_index]);
+            err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &filter_buf);
+            err |= clSetKernelArg(kernel, 3, sizeof(int), &input_w);
+            err |= clSetKernelArg(kernel, 4, sizeof(int), &filter_index);
+            err |= clSetKernelArg(kernel, 5, sizeof(int), &filter_w);
+            err |= clSetKernelArg(kernel, 6, sizeof(int), &filter_h);
+            err |= clSetKernelArg(kernel, 7, sizeof(int), &dx);
+            err |= clSetKernelArg(kernel, 8, sizeof(int), &dy);
+            if(err < 0) {
+                fprintf(stderr, "Couldn't create a kernel argument\n");
+                return -1;
+            }
+
+            err = opencl_add_job(kernel, 2, work_size);
+            if(err < 0) {
+                fprintf(stderr, "Couldn't enqueue the kernel\n");
+                return -1;
+            }
+            process_now ++;
+            filter_index ++;
+        }
+    }
+
+    clReleaseKernel(kernel);
+    clReleaseMemObject(filter_buf);
+
+    opencl_wait();
 
     return 0;
 }
@@ -445,18 +540,13 @@ int full_leaky_relu_layer_opencl(cl_mem * buffer, \
 
 int cnn_switch_next_layer_opencl(void)
 {
-    extern int input_cnt_now;
     extern int output_cnt_now;
     extern cl_mem * input_buffer_opencl;
     extern cl_mem * output_buffer_opencl;
     int index;
 
-    for (index = 0; index < input_cnt_now; index++) {
-        clReleaseMemObject(input_buffer_opencl[index]);
-    }
-
     for (index = 0; index < output_cnt_now; index++) {
-        input_buffer_opencl[index] = output_buffer_opencl[index];
+        opencl_buffer_dump(output_buffer_opencl[index], input_buffer_opencl[index], buffer_data_length);
     }
 
     return 0;
