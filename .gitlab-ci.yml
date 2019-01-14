@@ -40,10 +40,10 @@ arm_linux_build_test:
 github-push:
   stage: github-mirror
   script:
-    - git pull origin gpu-cache
-    - git checkout gpu-cache
+    - git pull origin gpu-mem-linear
+    - git checkout gpu-mem-linear
     - git remote add github git@github.com:yeonzi/BMP-Super-Resolution.git
-    - git push github gpu-cache --force
+    - git push github gpu-mem-linear --force
   tags:
     - deploy
     - github
