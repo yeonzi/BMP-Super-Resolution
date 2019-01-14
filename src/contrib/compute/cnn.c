@@ -351,14 +351,10 @@ int full_conv2d_layer_opencl( float * filters, float * bias, \
 {
     int input_index;
     int output_index;
-    int arr_index;
     int arr_size;
     int filter_size;
 
-    float * bias_arr;
     float * filter;
-
-    cl_int err;
 
     extern cl_mem * input_buffer_opencl;
     extern cl_mem * output_buffer_opencl;
@@ -372,21 +368,6 @@ int full_conv2d_layer_opencl( float * filters, float * bias, \
     filter_size = filter_w * filter_h;
     filter = filters;
 
-
-    // /* Create and alloc memory for bias array */
-    // bias_arr = malloc(arr_size * sizeof(float));
-
-    // /* set bias for each planc */
-    // for (output_index = 0; output_index < output_cnt; output_index++) {
-    //     for (arr_index = 0; arr_index < arr_size; arr_index ++) {
-    //         bias_arr[arr_index] = bias[output_index];
-    //     }
-
-    //     output_buffer_opencl[output_index] = opencl_create_rw_buffer( \
-    //         bias_arr, arr_size * sizeof(float), &err);
-    // }
-
-    // free(bias_arr);
 
     for (output_index = 0; output_index < output_cnt; output_index++) {
         opencl_mem_set(output_buffer_opencl[output_index], buffer_data_length, bias[output_index]);
