@@ -73,6 +73,13 @@ int full_conv2d_layer_native( float * filters, float * bias, \
     int input_cnt, int output_cnt, int input_w, int input_h, \
     int filter_w, int filter_h, int dx, int dy );
 
+int full_convolution_layer_opencl( \
+    cl_mem * input, cl_mem * output, float * filters, float * bias, \
+    int input_cnt, int output_cnt, int input_w, int input_h,        \
+    int filter_w, int filter_h, int dx, int dy );
+
+int full_leaky_relu_layer_opencl(cl_mem * buffer, float rate, int data_length, int plane_cnt);
+
 int group_conv2d_opencl( float * filters, float * bias, \
     int input_cnt, int output_cnt, int input_w, int input_h, \
     int filter_w, int filter_h, int dx, int dy );

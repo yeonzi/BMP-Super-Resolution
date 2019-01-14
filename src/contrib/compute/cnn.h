@@ -42,11 +42,4 @@ int cnn_full_leaky_relu_layer(float rate);
 
 int cnn_switch_next_layer(void);
 
-int full_convolution_layer_opencl( \
-    cl_mem * input, cl_mem * output, float * filters, float * bias, \
-    int input_cnt, int output_cnt, int input_w, int input_h,        \
-    int filter_w, int filter_h, int dx, int dy );
-int full_leaky_relu_layer_opencl(cl_mem * buffer, float rate, int data_length, int plane_cnt);
-
-
 #endif
